@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>달빛 생존자: Moonlit Survivors</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <canvas id="gameCanvas" aria-label="달빛 생존자 게임 화면"></canvas>
+    <div id="overlay" class="overlay">
+      <section id="titleScreen" class="screen active">
+        <p class="kicker">Moonlit Survivors</p>
+        <h1>달빛 생존자</h1>
+        <p class="summary">무너진 남청색 폐허에서 루나를 움직여 밤의 군세를 버티고 월식의 기사를 쓰러뜨리세요.</p>
+        <button id="startButton" class="primary-button">게임 시작</button>
+        <p class="hint">WASD / 방향키 이동 · Enter 시작</p>
+      </section>
+
+      <section id="levelScreen" class="screen level-screen">
+        <p class="kicker">Level Up</p>
+        <h2>달빛의 축복 선택</h2>
+        <div id="upgradeCards" class="upgrade-cards"></div>
+      </section>
+
+      <section id="gameoverScreen" class="screen">
+        <p class="kicker">Game Over</p>
+        <h2>밤이 루나를 삼켰습니다</h2>
+        <p id="gameoverStats" class="summary"></p>
+        <button id="restartButton" class="primary-button">다시 시작</button>
+      </section>
+
+      <section id="victoryScreen" class="screen">
+        <p class="kicker">Victory</p>
+        <h2>월식의 기사가 쓰러졌습니다</h2>
+        <p id="victoryStats" class="summary"></p>
+        <button id="victoryRestartButton" class="primary-button">다시 시작</button>
+      </section>
+    </div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
