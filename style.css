@@ -11,7 +11,7 @@
   --muted: #9dafc9;
   --joy-size: clamp(112px, 30vw, 144px);
   --joy-knob-size: calc(var(--joy-size) * 0.48);
-  --joy-safe-left: max(18px, calc(env(safe-area-inset-left) + 16px));
+  --joy-safe-right: max(18px, calc(env(safe-area-inset-right) + 16px));
   --joy-safe-bottom: max(24px, calc(env(safe-area-inset-bottom) + 20px));
 }
 
@@ -56,7 +56,7 @@ button {
 
 .mobile-controls {
   position: fixed;
-  left: var(--joy-safe-left);
+  right: var(--joy-safe-right);
   bottom: var(--joy-safe-bottom);
   z-index: 3;
   display: none;

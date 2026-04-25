@@ -1641,7 +1641,8 @@
 
     if (mobileHud) {
       const joyClearance = Math.min(178, viewW * 0.45);
-      drawBar(joyClearance, viewH - 20, viewW - joyClearance - 14, 10, player.exp / player.requiredExp, "#79c8ff", "#102239");
+      const expW = Math.max(80, viewW - joyClearance - 28);
+      drawBar(14, viewH - 20, expW, 10, player.exp / player.requiredExp, "#79c8ff", "#102239");
     } else {
       drawBar(18, viewH - 24, viewW - 36, 12, player.exp / player.requiredExp, "#79c8ff", "#102239");
     }
@@ -1700,10 +1701,13 @@
     const size = mobileHud ? 28 : 34;
     const gap = mobileHud ? 6 : 8;
     const totalW = items.length * size + Math.max(0, items.length - 1) * gap;
-    const startX = mobileHud ? Math.max(154, viewW - totalW - 14) : Math.max(22, viewW / 2 - totalW / 2);
+    const joyClearance = Math.min(178, viewW * 0.45);
+    const mobileSafeW = viewW - joyClearance - 28;
+    const startX = mobileHud ? 14 : Math.max(22, viewW / 2 - totalW / 2);
+    const mobileY = totalW <= mobileSafeW ? viewH - 56 : Math.max(48, viewH - 208);
     for (let i = 0; i < items.length; i++) {
       const x = startX + i * (size + gap);
-      const y = mobileHud ? viewH - 56 : viewH - 70;
+      const y = mobileHud ? mobileY : viewH - 70;
       ctx.fillStyle = "rgba(9, 20, 38, 0.84)";
       ctx.strokeStyle = "rgba(161, 218, 255, 0.35)";
       ctx.fillRect(x, y, size, size);
