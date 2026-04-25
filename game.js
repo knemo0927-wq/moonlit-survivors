@@ -4,18 +4,22 @@
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
   const overlay = document.getElementById("overlay");
+  const pauseButton = document.getElementById("pauseButton");
   const mobileControls = document.getElementById("mobileControls");
   const mobileJoystick = document.getElementById("mobileJoystick");
   const mobileJoystickKnob = document.getElementById("mobileJoystickKnob");
   const screens = {
     title: document.getElementById("titleScreen"),
     levelup: document.getElementById("levelScreen"),
+    paused: document.getElementById("pauseScreen"),
     gameover: document.getElementById("gameoverScreen"),
     victory: document.getElementById("victoryScreen"),
   };
   const upgradeCards = document.getElementById("upgradeCards");
   const gameoverStats = document.getElementById("gameoverStats");
   const victoryStats = document.getElementById("victoryStats");
+  const resumeButton = document.getElementById("resumeButton");
+  const pauseRestartButton = document.getElementById("pauseRestartButton");
 
   const WORLD = { width: 2400, height: 1600 };
   const MAX_ENEMIES = 180;
@@ -37,6 +41,7 @@
   let bossSpawned = false;
   let activeChoices = [];
   let resizeScale = 1;
+  let pauseButtonPointerId = null;
 
   const camera = { x: 0, y: 0 };
   const enemies = [];
@@ -417,13 +422,18 @@
     for (const [name, screen] of Object.entries(screens)) {
       screen.classList.toggle("active", name === next);
     }
+    overlay.classList.toggle("paused", next === "paused");
     overlay.style.display = next === "playing" ? "none" : "grid";
     updateMobileControls();
+    updatePauseButton();
     if (next === "gameover") {
       gameoverStats.textContent = `${formatTime(player.time)} 생존 · 처치 ${player.kills} · 레벨 ${player.level}`;
     }
     if (next === "victory") {
       victoryStats.textContent = `${formatTime(player.time)} 만에 승리 · 처치 ${player.kills} · 레벨 ${player.level}`;
+    }
+    if (next === "paused") {
+      resumeButton.focus({ preventScroll: true });
     }
   }
 
@@ -447,6 +457,53 @@
     mobileControls.classList.toggle("enabled", touchJoystick.enabled);
     mobileControls.classList.toggle("playing", state === "playing");
     if (!touchJoystick.enabled || state !== "playing") resetJoystick();
+  }
+
+  function updatePauseButton() {
+    const playing = state === "playing";
+    pauseButton.classList.toggle("playing", playing);
+    pauseButton.disabled = !playing;
+    pauseButton.setAttribute("aria-hidden", playing ? "false" : "true");
+    if (!playing) resetPauseButtonPointer();
+  }
+
+  function pauseGame() {
+    if (state !== "playing") return;
+    resetJoystick();
+    setState("paused");
+  }
+
+  function resumeGame() {
+    if (state !== "paused") return;
+    lastTime = performance.now();
+    setState("playing");
+  }
+
+  function togglePause() {
+    if (state === "playing") {
+      pauseGame();
+    } else if (state === "paused") {
+      resumeGame();
+    }
+  }
+
+  function resetPauseButtonPointer() {
+    const pointerId = pauseButtonPointerId;
+    if (pointerId !== null && pauseButton.hasPointerCapture && pauseButton.hasPointerCapture(pointerId)) {
+      pauseButton.releasePointerCapture(pointerId);
+    }
+    pauseButtonPointerId = null;
+    pauseButton.classList.remove("pressing");
+  }
+
+  function isPointerInsidePauseButton(event) {
+    const rect = pauseButton.getBoundingClientRect();
+    return (
+      event.clientX >= rect.left &&
+      event.clientX <= rect.right &&
+      event.clientY >= rect.top &&
+      event.clientY <= rect.bottom
+    );
   }
 
   function resetJoystick() {
@@ -1409,7 +1466,7 @@
   function drawMines() {
     for (const m of mines) {
       const p = worldToScreen(m.x, m.y);
-      const pulse = 0.65 + Math.sin(performance.now() / 120 + m.pulse) * 0.25;
+      const pulse = 0.65 + Math.sin(player.time * 8.3 + m.pulse) * 0.25;
       const mineKey = getMineSpriteKey(m);
       if (drawSprite(mineKey, p.x, p.y, {
         height: SPRITE_META[mineKey].height + pulse * 4,
@@ -1749,6 +1806,16 @@
     coarsePointerQuery.addListener(updateMobileControls);
   }
   window.addEventListener("keydown", (event) => {
+    if ((event.code === "Escape" || event.code === "KeyP") && (state === "playing" || state === "paused")) {
+      event.preventDefault();
+      if (!event.repeat) togglePause();
+      return;
+    }
+    if (state === "paused" && (event.code === "Enter" || event.code === "Space")) {
+      event.preventDefault();
+      if (!event.repeat) resumeGame();
+      return;
+    }
     keys.add(event.code);
     if (event.code === "Enter" && (state === "title" || state === "gameover" || state === "victory")) {
       resetGame();
@@ -1798,8 +1865,37 @@
     if (state === "playing") event.preventDefault();
   }, { passive: false });
 
+  pauseButton.addEventListener("pointerdown", (event) => {
+    if (state !== "playing" || pauseButtonPointerId !== null) return;
+    event.preventDefault();
+    pauseButtonPointerId = event.pointerId;
+    pauseButton.classList.add("pressing");
+    if (pauseButton.setPointerCapture) pauseButton.setPointerCapture(event.pointerId);
+  });
+  pauseButton.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== pauseButtonPointerId) return;
+    pauseButton.classList.toggle("pressing", isPointerInsidePauseButton(event));
+  });
+  pauseButton.addEventListener("pointerup", (event) => {
+    if (event.pointerId !== pauseButtonPointerId) return;
+    event.preventDefault();
+    const shouldPause = isPointerInsidePauseButton(event);
+    resetPauseButtonPointer();
+    if (shouldPause) pauseGame();
+  });
+  pauseButton.addEventListener("pointercancel", (event) => {
+    if (event.pointerId !== pauseButtonPointerId) return;
+    event.preventDefault();
+    resetPauseButtonPointer();
+  });
+  pauseButton.addEventListener("click", (event) => {
+    event.preventDefault();
+  });
+
   document.getElementById("startButton").addEventListener("click", resetGame);
   document.getElementById("restartButton").addEventListener("click", resetGame);
+  resumeButton.addEventListener("click", resumeGame);
+  pauseRestartButton.addEventListener("click", resetGame);
   document.getElementById("victoryRestartButton").addEventListener("click", resetGame);
 
   resize();
