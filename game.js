@@ -1701,7 +1701,7 @@
       ctx.fillText(statsText, hpX, hpY + hpH + 18, statsMaxW);
     } else {
       ctx.textAlign = "right";
-      ctx.fillText(statsText, viewW - 24, 34);
+      ctx.fillText(statsText, viewW - 86, 34);
     }
 
     if (mobileHud) {
