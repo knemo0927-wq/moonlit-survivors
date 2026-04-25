@@ -245,6 +245,33 @@ button {
   justify-items: center;
 }
 
+.stage-clear-screen {
+  width: min(680px, calc(100vw - 32px));
+}
+
+.stage-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 520px;
+  margin: 0 auto 24px;
+  color: var(--moon);
+}
+
+.stage-stats span {
+  padding: 10px 12px;
+  border: 1px solid rgba(172, 217, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(7, 18, 34, 0.64);
+}
+
+.stage-clear-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
 .secondary-button {
   min-width: 160px;
   min-height: 44px;
@@ -402,8 +429,14 @@ h2 {
     gap: 9px;
   }
 
-  .pause-actions button {
+  .pause-actions button,
+  .stage-clear-actions button {
     width: min(100%, 260px);
+  }
+
+  .stage-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .pause-hint-pc {

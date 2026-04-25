@@ -13,13 +13,17 @@
     levelup: document.getElementById("levelScreen"),
     paused: document.getElementById("pauseScreen"),
     gameover: document.getElementById("gameoverScreen"),
+    stageclear: document.getElementById("stageClearScreen"),
     victory: document.getElementById("victoryScreen"),
   };
   const upgradeCards = document.getElementById("upgradeCards");
   const gameoverStats = document.getElementById("gameoverStats");
+  const stageClearStats = document.getElementById("stageClearStats");
   const victoryStats = document.getElementById("victoryStats");
   const resumeButton = document.getElementById("resumeButton");
   const pauseRestartButton = document.getElementById("pauseRestartButton");
+  const stage2Button = document.getElementById("stage2Button");
+  const stageTitleButton = document.getElementById("stageTitleButton");
 
   const WORLD = { width: 2400, height: 1600 };
   const MAX_ENEMIES = 180;
@@ -34,8 +38,27 @@
     vector: { x: 0, y: 0 },
     radius: 0,
   };
+  const STAGES = {
+    1: {
+      name: "폐허",
+      bossType: "boss",
+      bossTime: 300,
+      gradient: ["#10233f", "#071322", "#03070e"],
+      overlay: "rgba(3, 7, 14, 0.34)",
+      vignette: ["rgba(8, 20, 38, 0)", "rgba(0, 2, 8, 0.42)"],
+    },
+    2: {
+      name: "월광 침식림",
+      bossType: "whiteStagKing",
+      bossTime: 300,
+      gradient: ["#17233a", "#101a26", "#030908"],
+      overlay: "rgba(13, 6, 24, 0.25)",
+      vignette: ["rgba(24, 42, 31, 0)", "rgba(1, 7, 5, 0.48)"],
+    },
+  };
 
   let state = "title";
+  let currentStage = 1;
   let lastTime = 0;
   let spawnTimer = 0;
   let bossSpawned = false;
@@ -47,6 +70,7 @@
   const enemies = [];
   const gems = [];
   const bullets = [];
+  const enemyProjectiles = [];
   const mines = [];
   const floaters = [];
   const hitSparks = [];
@@ -167,12 +191,41 @@
       anchorY: 0.7,
       glow: "#8fd7ff",
     },
+    moonWolf: {
+      src: "assets/sprites/enemy_moon_wolf.png",
+      height: 70,
+      anchorX: 0.5,
+      anchorY: 0.62,
+      glow: "#cbd9ff",
+      rotateToPlayer: true,
+    },
+    riftMoth: {
+      src: "assets/sprites/enemy_rift_moth.png",
+      height: 74,
+      anchorX: 0.5,
+      anchorY: 0.58,
+      glow: "#c18cff",
+    },
+    corruptedTreant: {
+      src: "assets/sprites/enemy_corrupted_treant.png",
+      height: 118,
+      anchorX: 0.5,
+      anchorY: 0.72,
+      glow: "#8dbf8f",
+    },
     boss: {
       src: "assets/sprites/boss_eclipse_knight.png",
       height: 196,
       anchorX: 0.5,
       anchorY: 0.74,
       glow: "#a9d8ff",
+    },
+    whiteStagKing: {
+      src: "assets/sprites/boss_white_stag_king.png",
+      height: 226,
+      anchorX: 0.5,
+      anchorY: 0.76,
+      glow: "#f2f4ff",
     },
     moonlightBlade: {
       src: "assets/weapons/weapon_moonlight_blade.png",
@@ -187,6 +240,13 @@
       anchorX: 0.5,
       anchorY: 0.5,
       glow: "#dff4ff",
+    },
+    moonShard: {
+      src: "assets/weapons/weapon_moon_shard.png",
+      height: 24,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      glow: "#f0f6ff",
     },
     starlightMineIdle: {
       src: "assets/weapons/weapon_starlight_mine_idle.png",
@@ -223,12 +283,22 @@
       anchorY: 0.5,
       glow: "#dff5ff",
     },
+    riftBolt: {
+      src: "assets/effects/effect_rift_bolt.png",
+      height: 32,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      glow: "#b66dff",
+    },
   };
 
   const SPRITES = Object.fromEntries(
     Object.entries(SPRITE_META).map(([key, meta]) => [key, loadSprite(meta.src)])
   );
-  const BACKGROUND_TILE = loadSprite("assets/backgrounds/bg_moonlit_ruins_tile.png");
+  const BACKGROUND_TILES = {
+    1: loadSprite("assets/backgrounds/bg_moonlit_ruins_tile.png"),
+    2: loadSprite("assets/backgrounds/bg_moonlit_forest_tile.png"),
+  };
 
   const player = {
     x: WORLD.width / 2,
@@ -248,6 +318,7 @@
     weapons: {
       blade: { level: 1, angle: 0, cooldowns: new Map() },
       bullet: { level: 0, timer: 0 },
+      shard: { level: 0, timer: 0 },
       mine: { level: 0, timer: 0 },
     },
     passives: {
@@ -288,6 +359,36 @@
       color: "#101520",
       eye: "#82d7ff",
     },
+    moonWolf: {
+      name: "달그늘 늑대",
+      hp: 26,
+      speed: 150,
+      damage: 11,
+      radius: 13,
+      exp: 3,
+      color: "#101323",
+      eye: "#d8e2ff",
+    },
+    riftMoth: {
+      name: "균열 나방",
+      hp: 34,
+      speed: 95,
+      damage: 8,
+      radius: 15,
+      exp: 4,
+      color: "#160d22",
+      eye: "#c985ff",
+    },
+    corruptedTreant: {
+      name: "침식된 나무정령",
+      hp: 95,
+      speed: 48,
+      damage: 20,
+      radius: 22,
+      exp: 8,
+      color: "#142014",
+      eye: "#9bd48f",
+    },
     boss: {
       name: "월식의 기사",
       hp: 1200,
@@ -297,6 +398,16 @@
       exp: 35,
       color: "#05050b",
       eye: "#ff244b",
+    },
+    whiteStagKing: {
+      name: "백야의 사슴왕",
+      hp: 2050,
+      speed: 75,
+      damage: 28,
+      radius: 41,
+      exp: 60,
+      color: "#171827",
+      eye: "#f3f6ff",
     },
   };
 
@@ -314,6 +425,13 @@
       desc: "가장 가까운 적을 향해 자동으로 발사되는 탄환을 획득하거나 강화합니다.",
       available: () => player.weapons.bullet.level < 6,
       apply: () => player.weapons.bullet.level += 1,
+    },
+    {
+      id: "shard",
+      title: "월광 파편",
+      desc: "가장 가까운 적을 추적하는 달빛 파편을 주기적으로 발사합니다.",
+      available: () => currentStage >= 2 && player.weapons.shard.level < 6,
+      apply: () => player.weapons.shard.level += 1,
     },
     {
       id: "mine",
@@ -375,9 +493,11 @@
   }
 
   function resetGame() {
+    currentStage = 1;
     enemies.length = 0;
     gems.length = 0;
     bullets.length = 0;
+    enemyProjectiles.length = 0;
     mines.length = 0;
     floaters.length = 0;
     hitSparks.length = 0;
@@ -403,6 +523,7 @@
       weapons: {
         blade: { level: 1, angle: 0, cooldowns: new Map() },
         bullet: { level: 0, timer: 0 },
+        shard: { level: 0, timer: 0 },
         mine: { level: 0, timer: 0 },
       },
       passives: { speed: 0, health: 0, magnet: 0 },
@@ -411,6 +532,50 @@
     bossSpawned = false;
     activeChoices = [];
     setState("playing");
+  }
+
+  function clearStageObjects() {
+    enemies.length = 0;
+    gems.length = 0;
+    bullets.length = 0;
+    enemyProjectiles.length = 0;
+    mines.length = 0;
+    floaters.length = 0;
+    hitSparks.length = 0;
+    explosionEffects.length = 0;
+    hitRings.length = 0;
+    damageNumbers.length = 0;
+    player.weapons.blade.cooldowns.clear();
+    resetPlayerFeedback();
+  }
+
+  function startStage2() {
+    if (state !== "stageclear") return;
+    currentStage = 2;
+    clearStageObjects();
+    player.x = WORLD.width / 2;
+    player.y = WORLD.height / 2;
+    player.time = 0;
+    player.kills = 0;
+    player.invulnFlash = 0;
+    player.moving = false;
+    player.hp = Math.max(player.hp, Math.ceil(player.maxHp * 0.7));
+    if (!player.weapons.shard) player.weapons.shard = { level: 0, timer: 0 };
+    player.weapons.shard.level = Math.max(1, player.weapons.shard.level);
+    player.weapons.shard.timer = 0;
+    spawnTimer = 0;
+    bossSpawned = false;
+    activeChoices = [];
+    keys.clear();
+    resetJoystick();
+    lastTime = performance.now();
+    setState("playing");
+  }
+
+  function returnToTitle() {
+    keys.clear();
+    resetJoystick();
+    setState("title");
   }
 
   function requiredExp(level) {
@@ -429,12 +594,25 @@
     if (next === "gameover") {
       gameoverStats.textContent = `${formatTime(player.time)} 생존 · 처치 ${player.kills} · 레벨 ${player.level}`;
     }
+    if (next === "stageclear") {
+      stageClearStats.innerHTML = renderStats([
+        ["클리어 시간", formatTime(player.time)],
+        ["현재 레벨", player.level],
+        ["처치 수", player.kills],
+        ["남은 체력", `${Math.ceil(player.hp)} / ${player.maxHp}`],
+      ]);
+      stage2Button.focus({ preventScroll: true });
+    }
     if (next === "victory") {
-      victoryStats.textContent = `${formatTime(player.time)} 만에 승리 · 처치 ${player.kills} · 레벨 ${player.level}`;
+      victoryStats.textContent = `월광 침식림 ${formatTime(player.time)} 클리어 · 처치 ${player.kills} · 레벨 ${player.level} · 남은 체력 ${Math.ceil(player.hp)} / ${player.maxHp}`;
     }
     if (next === "paused") {
       resumeButton.focus({ preventScroll: true });
     }
+  }
+
+  function renderStats(entries) {
+    return entries.map(([label, value]) => `<span>${label} ${value}</span>`).join("");
   }
 
   function formatTime(seconds) {
@@ -446,6 +624,18 @@
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+  }
+
+  function stageConfig() {
+    return STAGES[currentStage] || STAGES[1];
+  }
+
+  function isBossType(type) {
+    return type === "boss" || type === "whiteStagKing";
+  }
+
+  function angleDelta(from, to) {
+    return Math.atan2(Math.sin(to - from), Math.cos(to - from));
   }
 
   function isMobileInputAvailable() {
@@ -582,9 +772,15 @@
     updatePlayer(dt);
     updateCamera();
     updateSpawning(dt);
+    if (state !== "playing") return;
     updateEnemies(dt);
+    if (state !== "playing") return;
+    updateEnemyProjectiles(dt);
+    if (state !== "playing") return;
     updateWeapons(dt);
+    if (state !== "playing") return;
     updateGems(dt);
+    if (state !== "playing") return;
     updateCombatEffects(dt);
     updateFloaters(dt);
     if (player.hp <= 0) setState("gameover");
@@ -622,20 +818,27 @@
   }
 
   function updateSpawning(dt) {
-    if (player.time >= 300 && !bossSpawned) {
+    const stage = stageConfig();
+    if (player.time >= stage.bossTime && !bossSpawned) {
       trimEnemyCountForBoss();
-      spawnEnemy("boss");
+      spawnEnemy(stage.bossType);
       bossSpawned = true;
     }
     if (enemies.length >= MAX_ENEMIES) return;
     spawnTimer -= dt;
     if (spawnTimer > 0) return;
-    const table = spawnTable(player.time);
+    const table = spawnTable(currentStage, player.time);
     spawnEnemy(weightedPick(table.types));
     spawnTimer = table.interval;
   }
 
-  function spawnTable(time) {
+  function spawnTable(stage, time) {
+    if (stage === 2) {
+      if (time < 90) return { interval: 0.72, types: [["moonWolf", 1]] };
+      if (time < 240) return { interval: 0.58, types: [["moonWolf", 0.7], ["riftMoth", 0.3]] };
+      if (time < 300) return { interval: 0.44, types: [["moonWolf", 0.48], ["riftMoth", 0.34], ["corruptedTreant", 0.18]] };
+      return { interval: 0.5, types: [["moonWolf", 0.38], ["riftMoth", 0.34], ["corruptedTreant", 0.28]] };
+    }
     if (time < 60) return { interval: 1.0, types: [["worm", 1]] };
     if (time < 150) return { interval: 0.75, types: [["worm", 0.7], ["chaser", 0.3]] };
     if (time < 240) return { interval: 0.55, types: [["worm", 0.5], ["chaser", 0.3], ["sentinel", 0.2]] };
@@ -696,6 +899,7 @@
       dashTime: 0,
       dashVx: 0,
       dashVy: 0,
+      shootTimer: type === "riftMoth" ? 1.1 + Math.random() * 1.2 : 0,
     });
   }
 
@@ -726,6 +930,14 @@
         }
       }
 
+      if (e.type === "riftMoth") {
+        e.shootTimer -= dt;
+        if (e.shootTimer <= 0 && len < 680) {
+          fireRiftBolt(e, dx / len, dy / len);
+          e.shootTimer = 2.2 + Math.random() * 0.7;
+        }
+      }
+
       e.x = clamp(e.x + vx * speed * dt, e.radius, WORLD.width - e.radius);
       e.y = clamp(e.y + vy * speed * dt, e.radius, WORLD.height - e.radius);
 
@@ -742,14 +954,43 @@
     }
   }
 
+  function fireRiftBolt(enemy, dirX, dirY) {
+    enemyProjectiles.push({
+      x: enemy.x,
+      y: enemy.y,
+      vx: dirX * 170,
+      vy: dirY * 170,
+      radius: 8,
+      damage: enemy.damage,
+      life: 4,
+    });
+  }
+
+  function updateEnemyProjectiles(dt) {
+    for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
+      const projectile = enemyProjectiles[i];
+      projectile.life -= dt;
+      projectile.x += projectile.vx * dt;
+      projectile.y += projectile.vy * dt;
+      const outsideWorld = projectile.x < -40 || projectile.x > WORLD.width + 40 || projectile.y < -40 || projectile.y > WORLD.height + 40;
+      let consumed = projectile.life <= 0 || outsideWorld;
+      if (!consumed && Math.hypot(projectile.x - player.x, projectile.y - player.y) < projectile.radius + player.radius) {
+        damagePlayer(projectile.damage, projectile.x, projectile.y);
+        consumed = true;
+      }
+      if (consumed) enemyProjectiles.splice(i, 1);
+    }
+  }
+
   function killEnemy(index) {
     const e = enemies[index];
     enemies.splice(index, 1);
     player.weapons.blade.cooldowns.delete(e);
     player.kills += 1;
-    createGem(e.x, e.y, e.exp, e.type === "boss");
+    createGem(e.x, e.y, e.exp, isBossType(e.type));
     floaters.push({ x: e.x, y: e.y, text: "+", life: 0.6 });
-    if (e.type === "boss") setState("victory");
+    if (e.type === "boss") setState("stageclear");
+    if (e.type === "whiteStagKing") setState("victory");
   }
 
   function createGem(x, y, value, large = false) {
@@ -758,6 +999,7 @@
 
   function updateWeapons(dt) {
     updateBlade(dt);
+    updateMoonShard(dt);
     updateBullets(dt);
     updateMines(dt);
   }
@@ -800,6 +1042,7 @@
     for (let i = bullets.length - 1; i >= 0; i--) {
       const b = bullets[i];
       b.life -= dt;
+      updateBulletHoming(b, dt);
       b.x += b.vx * dt;
       b.y += b.vy * dt;
       let consumed = b.life <= 0;
@@ -814,6 +1057,31 @@
     }
   }
 
+  function updateMoonShard(dt) {
+    const weapon = player.weapons.shard;
+    if (!weapon || weapon.level <= 0) return;
+    weapon.timer -= dt;
+    const interval = Math.max(0.34, 1.15 - weapon.level * 0.1);
+    if (weapon.timer > 0) return;
+
+    const shots = weapon.level >= 4 ? 2 : 1;
+    for (let i = 0; i < shots; i++) fireMoonShard((i - (shots - 1) / 2) * 0.22);
+    weapon.timer = interval;
+  }
+
+  function updateBulletHoming(bullet, dt) {
+    if (!bullet.homing) return;
+
+    const target = bullet.target && enemies.includes(bullet.target) ? bullet.target : nearestEnemy();
+    if (!target) return;
+    bullet.target = target;
+    const currentAngle = Math.atan2(bullet.vy, bullet.vx);
+    const targetAngle = Math.atan2(target.y - bullet.y, target.x - bullet.x);
+    const nextAngle = currentAngle + clamp(angleDelta(currentAngle, targetAngle), -bullet.turnRate * dt, bullet.turnRate * dt);
+    bullet.vx = Math.cos(nextAngle) * bullet.speed;
+    bullet.vy = Math.sin(nextAngle) * bullet.speed;
+  }
+
   function fireBullet(angleOffset) {
     const target = nearestEnemy();
     if (!target) return;
@@ -826,6 +1094,29 @@
       radius: 5,
       damage: 15 + player.weapons.bullet.level * 7,
       life: 1.6,
+      spriteKey: "silverBullet",
+    });
+  }
+
+  function fireMoonShard(angleOffset) {
+    const target = nearestEnemy();
+    if (!target) return;
+    const weapon = player.weapons.shard;
+    const angle = Math.atan2(target.y - player.y, target.x - player.x) + angleOffset;
+    const speed = 270 + weapon.level * 24;
+    bullets.push({
+      x: player.x,
+      y: player.y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      radius: 7,
+      damage: 12 + weapon.level * 6,
+      life: 2.8,
+      spriteKey: "moonShard",
+      homing: true,
+      speed,
+      turnRate: 5.4,
+      target,
     });
   }
 
@@ -893,19 +1184,17 @@
 
   function damageEnemy(enemy, amount) {
     enemy.hp -= amount;
-    enemy.hitFlash = enemy.type === "boss" ? 0.14 : 0.11;
+    enemy.hitFlash = isBossType(enemy.type) ? 0.14 : 0.11;
     createHitSparks(enemy);
   }
 
   function createHitSparks(enemy) {
     const now = player.time;
-    const isBoss = enemy.type === "boss";
+    const isBoss = isBossType(enemy.type);
     if (!isBoss && now < enemy.nextSparkTime && Math.random() > 0.28) return;
 
     enemy.nextSparkTime = now + 0.055;
-    const colors = enemy.type === "sentinel"
-      ? ["#FFD2DC", "#FF4A6A", "#B78CFF", "#8FD7FF"]
-      : ["#FFD2DC", "#FF4A6A", "#B78CFF"];
+    const colors = hitSparkColors(enemy.type);
     const count = isBoss ? 7 : 3 + Math.floor(Math.random() * 3);
     const towardPlayer = Math.atan2(player.y - enemy.y, player.x - enemy.x);
 
@@ -924,6 +1213,15 @@
         duration: 0.14,
       });
     }
+  }
+
+  function hitSparkColors(type) {
+    if (type === "sentinel") return ["#FFD2DC", "#FF4A6A", "#B78CFF", "#8FD7FF"];
+    if (type === "whiteStagKing") return ["#F4F6FF", "#BFD5FF", "#B78CFF", "#D9F9DD"];
+    if (type === "corruptedTreant") return ["#D9F9DD", "#8FD48B", "#B78CFF"];
+    if (type === "riftMoth") return ["#F0D8FF", "#B78CFF", "#72D6FF"];
+    if (type === "moonWolf") return ["#E6ECFF", "#AFC8FF", "#B78CFF"];
+    return ["#FFD2DC", "#FF4A6A", "#B78CFF"];
   }
 
   function updateCombatEffects(dt) {
@@ -1128,6 +1426,7 @@
     drawGems();
     drawMines();
     drawEnemies();
+    drawEnemyProjectiles();
     drawPlayer();
     drawPlayerHitRings();
     drawBullets();
@@ -1136,7 +1435,11 @@
     drawFloaters();
     drawPlayerDamageNumbers();
     drawDamageVignette();
-    drawHud();
+    if (shouldDrawHud()) drawHud();
+  }
+
+  function shouldDrawHud() {
+    return state === "playing" || state === "paused" || state === "levelup";
   }
 
   function worldToScreen(x, y) {
@@ -1185,35 +1488,37 @@
   function drawWorld() {
     const viewW = canvas.width / resizeScale;
     const viewH = canvas.height / resizeScale;
+    const stage = stageConfig();
     const gradient = ctx.createRadialGradient(viewW / 2, viewH / 2, 80, viewW / 2, viewH / 2, Math.max(viewW, viewH) * 0.7);
-    gradient.addColorStop(0, "#10233f");
-    gradient.addColorStop(0.55, "#071322");
-    gradient.addColorStop(1, "#03070e");
+    gradient.addColorStop(0, stage.gradient[0]);
+    gradient.addColorStop(0.55, stage.gradient[1]);
+    gradient.addColorStop(1, stage.gradient[2]);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, viewW, viewH);
 
-    if (BACKGROUND_TILE.complete && BACKGROUND_TILE.naturalWidth > 0) {
-      drawBackgroundTile(viewW, viewH);
+    const backgroundTile = BACKGROUND_TILES[currentStage] || BACKGROUND_TILES[1];
+    if (backgroundTile.complete && backgroundTile.naturalWidth > 0) {
+      drawBackgroundTile(viewW, viewH, backgroundTile);
     } else {
       drawFallbackGrid();
     }
 
-    ctx.fillStyle = "rgba(3, 7, 14, 0.34)";
+    ctx.fillStyle = stage.overlay;
     ctx.fillRect(0, 0, viewW, viewH);
 
     const vignette = ctx.createRadialGradient(viewW / 2, viewH / 2, Math.min(viewW, viewH) * 0.18, viewW / 2, viewH / 2, Math.max(viewW, viewH) * 0.68);
-    vignette.addColorStop(0, "rgba(8, 20, 38, 0)");
-    vignette.addColorStop(1, "rgba(0, 2, 8, 0.42)");
+    vignette.addColorStop(0, stage.vignette[0]);
+    vignette.addColorStop(1, stage.vignette[1]);
     ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, viewW, viewH);
   }
 
-  function drawBackgroundTile(viewW, viewH) {
-    const pattern = ctx.createPattern(BACKGROUND_TILE, "repeat");
+  function drawBackgroundTile(viewW, viewH, backgroundTile) {
+    const pattern = ctx.createPattern(backgroundTile, "repeat");
     if (!pattern) return;
 
-    const tileW = BACKGROUND_TILE.naturalWidth;
-    const tileH = BACKGROUND_TILE.naturalHeight;
+    const tileW = backgroundTile.naturalWidth;
+    const tileH = backgroundTile.naturalHeight;
     const offsetX = -((camera.x % tileW) + tileW) % tileW;
     const offsetY = -((camera.y % tileH) + tileH) % tileH;
 
@@ -1332,9 +1637,10 @@
       const meta = SPRITE_META[spriteKey] || SPRITE_META[e.type];
       if (meta) {
         const angle = Math.atan2(player.y - e.y, player.x - e.x) - Math.PI / 2;
-        const bob = e.type === "boss" ? Math.sin(player.time * 2) * 2 : Math.sin(player.time * 7 + e.x * 0.03) * 1.4;
+        const isBoss = isBossType(e.type);
+        const bob = isBoss ? Math.sin(player.time * 2) * 2 : Math.sin(player.time * 7 + e.x * 0.03) * 1.4;
         const height = meta.height + bob;
-        drawEntityShadow(p.x, p.y, e.radius * (e.type === "boss" ? 1.35 : 1.15), e.radius * 0.4, e.type === "boss" ? 0.55 : 0.4);
+        drawEntityShadow(p.x, p.y, e.radius * (isBoss ? 1.35 : 1.15), e.radius * 0.4, isBoss ? 0.55 : 0.4);
         if (e.type === "boss" && e.dashTime > 0) {
           drawBossDashWarning(p);
         }
@@ -1342,7 +1648,7 @@
           height,
           rotation: meta.rotateToPlayer ? angle : 0,
           hitFlash: e.hitFlash,
-          shadowBlur: e.type === "boss" ? 18 : 8,
+          shadowBlur: isBoss ? 18 : 8,
         };
         if (drawSprite(spriteKey, p.x, p.y, options) || (spriteKey !== e.type && drawSprite(e.type, p.x, p.y, options))) {
           continue;
@@ -1367,12 +1673,13 @@
 
   function drawEnemyFallback(e, p) {
       const spec = ENEMY_TYPES[e.type];
+      const isBoss = isBossType(e.type);
       ctx.save();
-      ctx.shadowBlur = e.type === "boss" ? 26 : 10;
-      ctx.shadowColor = e.type === "sentinel" ? "#66cfff" : "#ff3154";
+      ctx.shadowBlur = isBoss ? 26 : 10;
+      ctx.shadowColor = e.type === "sentinel" ? "#66cfff" : spec.eye;
       ctx.fillStyle = e.hitFlash > 0 ? "#eaf7ff" : spec.color;
       ctx.beginPath();
-      if (e.type === "sentinel") {
+      if (e.type === "sentinel" || e.type === "corruptedTreant") {
         ctx.rect(p.x - e.radius, p.y - e.radius, e.radius * 2, e.radius * 2);
       } else {
         ctx.arc(p.x, p.y, e.radius, 0, TWO_PI);
@@ -1386,7 +1693,7 @@
       ctx.arc(p.x + e.radius * 0.32, eyeY, Math.max(2, e.radius * 0.13), 0, TWO_PI);
       ctx.fill();
 
-      if (e.type === "sentinel" || e.type === "boss") {
+      if (e.type === "sentinel" || isBoss) {
         ctx.strokeStyle = "rgba(116, 219, 255, 0.8)";
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -1445,19 +1752,42 @@
     for (const b of bullets) {
       const p = worldToScreen(b.x, b.y);
       const angle = Math.atan2(b.vy, b.vx);
-      if (drawSprite("silverBullet", p.x, p.y, {
+      const spriteKey = b.spriteKey || "silverBullet";
+      if (drawSprite(spriteKey, p.x, p.y, {
         rotation: angle,
-        shadowBlur: 16,
+        shadowBlur: b.homing ? 20 : 16,
       })) {
         continue;
       }
 
       ctx.save();
-      ctx.shadowBlur = 16;
-      ctx.shadowColor = "#dff4ff";
-      ctx.fillStyle = "#eefbff";
+      ctx.shadowBlur = b.homing ? 20 : 16;
+      ctx.shadowColor = b.homing ? "#f0f6ff" : "#dff4ff";
+      ctx.fillStyle = b.homing ? "#eef0ff" : "#eefbff";
       ctx.beginPath();
       ctx.arc(p.x, p.y, b.radius, 0, TWO_PI);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function drawEnemyProjectiles() {
+    for (const projectile of enemyProjectiles) {
+      const p = worldToScreen(projectile.x, projectile.y);
+      const angle = Math.atan2(projectile.vy, projectile.vx);
+      if (drawSprite("riftBolt", p.x, p.y, {
+        rotation: angle,
+        shadowBlur: 18,
+      })) {
+        continue;
+      }
+
+      ctx.save();
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = "#b66dff";
+      ctx.fillStyle = "#d4a8ff";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, projectile.radius, 0, TWO_PI);
       ctx.fill();
       ctx.restore();
     }
@@ -1681,6 +2011,10 @@
     ctx.shadowColor = "#7ed4ff";
     ctx.fillText(formatTime(player.time), viewW / 2, mobileHud ? 25 : 32);
     ctx.shadowBlur = 0;
+    ctx.font = mobileHud ? "800 10px sans-serif" : "800 12px sans-serif";
+    ctx.fillStyle = "rgba(220, 238, 255, 0.72)";
+    ctx.fillText(stageConfig().name, viewW / 2, mobileHud ? 40 : 50);
+    ctx.shadowBlur = 0;
 
     const hpX = mobileHud ? 12 : 22;
     const hpY = mobileHud ? 14 : 22;
@@ -1758,6 +2092,7 @@
     const items = [
       ["☾", player.weapons.blade.level],
       ["•", player.weapons.bullet.level],
+      ["◆", player.weapons.shard?.level || 0],
       ["✦", player.weapons.mine.level],
       ["SPD", player.passives.speed],
       ["HP", player.passives.health],
@@ -1788,15 +2123,15 @@
   }
 
   function drawBossBar(viewW, mobileHud = false) {
-    const boss = enemies.find((e) => e.type === "boss");
+    const boss = enemies.find((e) => isBossType(e.type));
     if (!boss) return;
     const w = Math.min(mobileHud ? 340 : 560, viewW - (mobileHud ? 28 : 48));
     const x = (viewW - w) / 2;
-    drawBar(x, mobileHud ? 48 : 54, w, mobileHud ? 11 : 14, boss.hp / boss.maxHp, "#c92745", "#25101a");
+    drawBar(x, mobileHud ? 64 : 72, w, mobileHud ? 11 : 14, boss.hp / boss.maxHp, "#c92745", "#25101a");
     ctx.textAlign = "center";
     ctx.font = mobileHud ? "800 11px sans-serif" : "800 13px sans-serif";
     ctx.fillStyle = "#f3f9ff";
-    ctx.fillText("월식의 기사", viewW / 2, mobileHud ? 44 : 50);
+    ctx.fillText(ENEMY_TYPES[boss.type].name, viewW / 2, mobileHud ? 60 : 68);
   }
 
   function loop(time) {
@@ -1825,6 +2160,9 @@
       return;
     }
     keys.add(event.code);
+    if (event.code === "Enter" && state === "stageclear") {
+      startStage2();
+    }
     if (event.code === "Enter" && (state === "title" || state === "gameover" || state === "victory")) {
       resetGame();
     }
@@ -1904,6 +2242,8 @@
   document.getElementById("restartButton").addEventListener("click", resetGame);
   resumeButton.addEventListener("click", resumeGame);
   pauseRestartButton.addEventListener("click", resetGame);
+  stage2Button.addEventListener("click", startStage2);
+  stageTitleButton.addEventListener("click", returnToTitle);
   document.getElementById("victoryRestartButton").addEventListener("click", resetGame);
 
   resize();
