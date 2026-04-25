@@ -450,6 +450,10 @@
   }
 
   function resetJoystick() {
+    const pointerId = touchJoystick.activePointerId;
+    if (pointerId !== null && mobileJoystick.hasPointerCapture && mobileJoystick.hasPointerCapture(pointerId)) {
+      mobileJoystick.releasePointerCapture(pointerId);
+    }
     touchJoystick.active = false;
     touchJoystick.activePointerId = null;
     touchJoystick.vector.x = 0;
@@ -490,6 +494,12 @@
     mobileJoystick.classList.remove("rippling");
     void mobileJoystick.offsetWidth;
     mobileJoystick.classList.add("rippling");
+  }
+
+  function resetActiveJoystick(event) {
+    if (event && "pointerId" in event && event.pointerId !== touchJoystick.activePointerId) return;
+    if (touchJoystick.activePointerId === null) return;
+    resetJoystick();
   }
 
   function dist(a, b) {
@@ -1773,6 +1783,12 @@
     if (event.pointerId !== touchJoystick.activePointerId) return;
     event.preventDefault();
     resetJoystick();
+  });
+  document.addEventListener("pointerup", resetActiveJoystick);
+  document.addEventListener("pointercancel", resetActiveJoystick);
+  window.addEventListener("blur", resetActiveJoystick);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") resetActiveJoystick();
   });
   document.addEventListener("touchmove", (event) => {
     if (state === "playing") event.preventDefault();
