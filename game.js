@@ -1692,9 +1692,17 @@
     ctx.fillStyle = "#dceeff";
     ctx.fillText(`${Math.ceil(player.hp)} / ${player.maxHp}`, hpX + 8, hpY + hpH - 4);
 
-    ctx.textAlign = "right";
     ctx.font = mobileHud ? "700 12px sans-serif" : "700 16px sans-serif";
-    ctx.fillText(`처치 ${player.kills}  레벨 ${player.level}`, viewW - (mobileHud ? 12 : 24), mobileHud ? 26 : 34);
+    const statsText = `처치 ${player.kills}  레벨 ${player.level}`;
+    if (mobileHud) {
+      const pauseButtonClearance = 80;
+      const statsMaxW = Math.max(1, viewW - hpX - pauseButtonClearance);
+      ctx.textAlign = "left";
+      ctx.fillText(statsText, hpX, hpY + hpH + 18, statsMaxW);
+    } else {
+      ctx.textAlign = "right";
+      ctx.fillText(statsText, viewW - 24, 34);
+    }
 
     if (mobileHud) {
       const joyClearance = Math.min(178, viewW * 0.45);
