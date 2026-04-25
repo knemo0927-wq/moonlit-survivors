@@ -10,6 +10,13 @@
 <body>
   <main class="game-shell">
     <canvas id="gameCanvas" aria-label="달빛 생존자 게임 화면"></canvas>
+    <div id="mobileControls" class="mobile-controls" aria-hidden="true">
+      <div id="mobileJoystick" class="mobile-joystick">
+        <img class="joystick-ring" src="assets/ui/mobile_joystick_ring.png" alt="">
+        <img id="mobileJoystickRipple" class="joystick-ripple" src="assets/ui/mobile_touch_ripple.png" alt="">
+        <img id="mobileJoystickKnob" class="joystick-knob" src="assets/ui/mobile_joystick_knob.png" alt="">
+      </div>
+    </div>
     <div id="overlay" class="overlay">
       <section id="titleScreen" class="screen active">
         <p class="kicker">Moonlit Survivors</p>

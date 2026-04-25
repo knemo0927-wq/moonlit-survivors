@@ -4,6 +4,9 @@
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
   const overlay = document.getElementById("overlay");
+  const mobileControls = document.getElementById("mobileControls");
+  const mobileJoystick = document.getElementById("mobileJoystick");
+  const mobileJoystickKnob = document.getElementById("mobileJoystickKnob");
   const screens = {
     title: document.getElementById("titleScreen"),
     levelup: document.getElementById("levelScreen"),
@@ -19,6 +22,14 @@
   const TWO_PI = Math.PI * 2;
   const keys = new Set();
   const pointer = { x: 0, y: 0 };
+  const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
+  const touchJoystick = {
+    enabled: false,
+    active: false,
+    activePointerId: null,
+    vector: { x: 0, y: 0 },
+    radius: 0,
+  };
 
   let state = "title";
   let lastTime = 0;
@@ -355,6 +366,7 @@
     canvas.style.height = `${window.innerHeight}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     resizeScale = dpr;
+    updateMobileControls();
   }
 
   function resetGame() {
@@ -406,6 +418,7 @@
       screen.classList.toggle("active", name === next);
     }
     overlay.style.display = next === "playing" ? "none" : "grid";
+    updateMobileControls();
     if (next === "gameover") {
       gameoverStats.textContent = `${formatTime(player.time)} 생존 · 처치 ${player.kills} · 레벨 ${player.level}`;
     }
@@ -423,6 +436,60 @@
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
+  }
+
+  function isMobileInputAvailable() {
+    return coarsePointerQuery.matches || window.innerWidth <= 820;
+  }
+
+  function updateMobileControls() {
+    touchJoystick.enabled = isMobileInputAvailable();
+    mobileControls.classList.toggle("enabled", touchJoystick.enabled);
+    mobileControls.classList.toggle("playing", state === "playing");
+    if (!touchJoystick.enabled || state !== "playing") resetJoystick();
+  }
+
+  function resetJoystick() {
+    touchJoystick.active = false;
+    touchJoystick.activePointerId = null;
+    touchJoystick.vector.x = 0;
+    touchJoystick.vector.y = 0;
+    mobileJoystick.classList.remove("active");
+    mobileJoystickKnob.style.transform = "translate(-50%, -50%)";
+  }
+
+  function updateJoystickFromPointer(event) {
+    const rect = mobileJoystick.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const radius = rect.width * 0.42;
+    const deadzone = radius * 0.18;
+    const dx = event.clientX - centerX;
+    const dy = event.clientY - centerY;
+    const distance = Math.hypot(dx, dy);
+    const clampedDistance = Math.min(distance, radius);
+    const angle = Math.atan2(dy, dx);
+    const knobX = Math.cos(angle) * clampedDistance;
+    const knobY = Math.sin(angle) * clampedDistance;
+
+    touchJoystick.radius = radius;
+    mobileJoystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
+
+    if (distance <= deadzone) {
+      touchJoystick.vector.x = 0;
+      touchJoystick.vector.y = 0;
+      return;
+    }
+
+    const normalized = (clampedDistance - deadzone) / (radius - deadzone);
+    touchJoystick.vector.x = Math.cos(angle) * normalized;
+    touchJoystick.vector.y = Math.sin(angle) * normalized;
+  }
+
+  function triggerJoystickRipple() {
+    mobileJoystick.classList.remove("rippling");
+    void mobileJoystick.offsetWidth;
+    mobileJoystick.classList.add("rippling");
   }
 
   function dist(a, b) {
@@ -459,12 +526,23 @@
   function updatePlayer(dt) {
     let vx = 0;
     let vy = 0;
-    if (keys.has("KeyA") || keys.has("ArrowLeft")) vx -= 1;
-    if (keys.has("KeyD") || keys.has("ArrowRight")) vx += 1;
-    if (keys.has("KeyW") || keys.has("ArrowUp")) vy -= 1;
-    if (keys.has("KeyS") || keys.has("ArrowDown")) vy += 1;
-    const len = Math.hypot(vx, vy) || 1;
-    player.moving = Math.hypot(vx, vy) > 0;
+    if (touchJoystick.active) {
+      vx = touchJoystick.vector.x;
+      vy = touchJoystick.vector.y;
+      const magnitude = Math.hypot(vx, vy);
+      player.moving = magnitude > 0;
+      player.x = clamp(player.x + vx * player.speed * dt, player.radius, WORLD.width - player.radius);
+      player.y = clamp(player.y + vy * player.speed * dt, player.radius, WORLD.height - player.radius);
+      return;
+    } else {
+      if (keys.has("KeyA") || keys.has("ArrowLeft")) vx -= 1;
+      if (keys.has("KeyD") || keys.has("ArrowRight")) vx += 1;
+      if (keys.has("KeyW") || keys.has("ArrowUp")) vy -= 1;
+      if (keys.has("KeyS") || keys.has("ArrowDown")) vy += 1;
+    }
+    const magnitude = Math.hypot(vx, vy);
+    const len = magnitude || 1;
+    player.moving = magnitude > 0;
     player.x = clamp(player.x + (vx / len) * player.speed * dt, player.radius, WORLD.width - player.radius);
     player.y = clamp(player.y + (vy / len) * player.speed * dt, player.radius, WORLD.height - player.radius);
   }
@@ -1527,28 +1605,38 @@
   function drawHud() {
     const viewW = canvas.width / resizeScale;
     const viewH = canvas.height / resizeScale;
+    const mobileHud = isMobileInputAvailable() || viewW <= 820;
     ctx.save();
-    ctx.font = "700 18px sans-serif";
+    ctx.font = mobileHud ? "700 15px sans-serif" : "700 18px sans-serif";
     ctx.textAlign = "center";
     ctx.fillStyle = "#f3f9ff";
     ctx.shadowBlur = 12;
     ctx.shadowColor = "#7ed4ff";
-    ctx.fillText(formatTime(player.time), viewW / 2, 32);
+    ctx.fillText(formatTime(player.time), viewW / 2, mobileHud ? 25 : 32);
     ctx.shadowBlur = 0;
 
-    drawHpBar(22, 22, 230, 18);
+    const hpX = mobileHud ? 12 : 22;
+    const hpY = mobileHud ? 14 : 22;
+    const hpW = mobileHud ? Math.min(150, viewW * 0.38) : 230;
+    const hpH = mobileHud ? 14 : 18;
+    drawHpBar(hpX, hpY, hpW, hpH);
     ctx.textAlign = "left";
-    ctx.font = "700 13px sans-serif";
+    ctx.font = mobileHud ? "700 10px sans-serif" : "700 13px sans-serif";
     ctx.fillStyle = "#dceeff";
-    ctx.fillText(`${Math.ceil(player.hp)} / ${player.maxHp}`, 30, 36);
+    ctx.fillText(`${Math.ceil(player.hp)} / ${player.maxHp}`, hpX + 8, hpY + hpH - 4);
 
     ctx.textAlign = "right";
-    ctx.font = "700 16px sans-serif";
-    ctx.fillText(`처치 ${player.kills}   레벨 ${player.level}`, viewW - 24, 34);
+    ctx.font = mobileHud ? "700 12px sans-serif" : "700 16px sans-serif";
+    ctx.fillText(`처치 ${player.kills}  레벨 ${player.level}`, viewW - (mobileHud ? 12 : 24), mobileHud ? 26 : 34);
 
-    drawBar(18, viewH - 24, viewW - 36, 12, player.exp / player.requiredExp, "#79c8ff", "#102239");
-    drawIcons(viewW, viewH);
-    drawBossBar(viewW);
+    if (mobileHud) {
+      const joyClearance = Math.min(178, viewW * 0.45);
+      drawBar(joyClearance, viewH - 20, viewW - joyClearance - 14, 10, player.exp / player.requiredExp, "#79c8ff", "#102239");
+    } else {
+      drawBar(18, viewH - 24, viewW - 36, 12, player.exp / player.requiredExp, "#79c8ff", "#102239");
+    }
+    drawIcons(viewW, viewH, mobileHud);
+    drawBossBar(viewW, mobileHud);
     ctx.restore();
   }
 
@@ -1590,7 +1678,7 @@
     ctx.restore();
   }
 
-  function drawIcons(viewW, viewH) {
+  function drawIcons(viewW, viewH, mobileHud = false) {
     const items = [
       ["☾", player.weapons.blade.level],
       ["•", player.weapons.bullet.level],
@@ -1599,35 +1687,37 @@
       ["HP", player.passives.health],
       ["MAG", player.passives.magnet],
     ].filter((item) => item[1] > 0);
-    const size = 34;
-    const startX = Math.max(22, viewW / 2 - items.length * (size + 8) / 2);
+    const size = mobileHud ? 28 : 34;
+    const gap = mobileHud ? 6 : 8;
+    const totalW = items.length * size + Math.max(0, items.length - 1) * gap;
+    const startX = mobileHud ? Math.max(154, viewW - totalW - 14) : Math.max(22, viewW / 2 - totalW / 2);
     for (let i = 0; i < items.length; i++) {
-      const x = startX + i * (size + 8);
-      const y = viewH - 70;
+      const x = startX + i * (size + gap);
+      const y = mobileHud ? viewH - 56 : viewH - 70;
       ctx.fillStyle = "rgba(9, 20, 38, 0.84)";
       ctx.strokeStyle = "rgba(161, 218, 255, 0.35)";
       ctx.fillRect(x, y, size, size);
       ctx.strokeRect(x, y, size, size);
       ctx.fillStyle = "#e9f8ff";
       ctx.textAlign = "center";
-      ctx.font = items[i][0].length > 2 ? "700 10px sans-serif" : "700 18px sans-serif";
-      ctx.fillText(items[i][0], x + size / 2, y + 22);
-      ctx.font = "700 10px sans-serif";
+      ctx.font = items[i][0].length > 2 ? "700 9px sans-serif" : `${mobileHud ? "700 15px" : "700 18px"} sans-serif`;
+      ctx.fillText(items[i][0], x + size / 2, y + (mobileHud ? 18 : 22));
+      ctx.font = "700 9px sans-serif";
       ctx.fillStyle = "#e7c66a";
-      ctx.fillText(items[i][1], x + size - 7, y + 31);
+      ctx.fillText(items[i][1], x + size - 7, y + size - 4);
     }
   }
 
-  function drawBossBar(viewW) {
+  function drawBossBar(viewW, mobileHud = false) {
     const boss = enemies.find((e) => e.type === "boss");
     if (!boss) return;
-    const w = Math.min(560, viewW - 48);
+    const w = Math.min(mobileHud ? 340 : 560, viewW - (mobileHud ? 28 : 48));
     const x = (viewW - w) / 2;
-    drawBar(x, 54, w, 14, boss.hp / boss.maxHp, "#c92745", "#25101a");
+    drawBar(x, mobileHud ? 48 : 54, w, mobileHud ? 11 : 14, boss.hp / boss.maxHp, "#c92745", "#25101a");
     ctx.textAlign = "center";
-    ctx.font = "800 13px sans-serif";
+    ctx.font = mobileHud ? "800 11px sans-serif" : "800 13px sans-serif";
     ctx.fillStyle = "#f3f9ff";
-    ctx.fillText("월식의 기사", viewW / 2, 50);
+    ctx.fillText("월식의 기사", viewW / 2, mobileHud ? 44 : 50);
   }
 
   function loop(time) {
@@ -1639,6 +1729,11 @@
   }
 
   window.addEventListener("resize", resize);
+  if (coarsePointerQuery.addEventListener) {
+    coarsePointerQuery.addEventListener("change", updateMobileControls);
+  } else {
+    coarsePointerQuery.addListener(updateMobileControls);
+  }
   window.addEventListener("keydown", (event) => {
     keys.add(event.code);
     if (event.code === "Enter" && (state === "title" || state === "gameover" || state === "victory")) {
@@ -1654,6 +1749,34 @@
     pointer.x = event.clientX;
     pointer.y = event.clientY;
   });
+  mobileJoystick.addEventListener("pointerdown", (event) => {
+    if (!touchJoystick.enabled || state !== "playing" || touchJoystick.activePointerId !== null) return;
+    event.preventDefault();
+    touchJoystick.active = true;
+    touchJoystick.activePointerId = event.pointerId;
+    mobileJoystick.setPointerCapture(event.pointerId);
+    mobileJoystick.classList.add("active");
+    triggerJoystickRipple();
+    updateJoystickFromPointer(event);
+  });
+  mobileJoystick.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== touchJoystick.activePointerId) return;
+    event.preventDefault();
+    updateJoystickFromPointer(event);
+  });
+  mobileJoystick.addEventListener("pointerup", (event) => {
+    if (event.pointerId !== touchJoystick.activePointerId) return;
+    event.preventDefault();
+    resetJoystick();
+  });
+  mobileJoystick.addEventListener("pointercancel", (event) => {
+    if (event.pointerId !== touchJoystick.activePointerId) return;
+    event.preventDefault();
+    resetJoystick();
+  });
+  document.addEventListener("touchmove", (event) => {
+    if (state === "playing") event.preventDefault();
+  }, { passive: false });
 
   document.getElementById("startButton").addEventListener("click", resetGame);
   document.getElementById("restartButton").addEventListener("click", resetGame);
