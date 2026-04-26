@@ -18,7 +18,10 @@
   };
   const upgradeCards = document.getElementById("upgradeCards");
   const gameoverStats = document.getElementById("gameoverStats");
+  const stageClearTitle = document.getElementById("stageClearTitle");
+  const stageClearSummary = document.getElementById("stageClearSummary");
   const stageClearStats = document.getElementById("stageClearStats");
+  const victoryTitle = document.getElementById("victoryTitle");
   const victoryStats = document.getElementById("victoryStats");
   const resumeButton = document.getElementById("resumeButton");
   const pauseRestartButton = document.getElementById("pauseRestartButton");
@@ -54,6 +57,27 @@
       gradient: ["#17233a", "#101a26", "#030908"],
       overlay: "rgba(13, 6, 24, 0.25)",
       vignette: ["rgba(24, 42, 31, 0)", "rgba(1, 7, 5, 0.48)"],
+    },
+    3: {
+      name: "검은 달의 성소",
+      bossType: "blackMoonHeart",
+      bossTime: 300,
+      gradient: ["#171024", "#090911", "#020204"],
+      overlay: "rgba(2, 2, 8, 0.28)",
+      vignette: ["rgba(24, 16, 36, 0)", "rgba(0, 0, 3, 0.58)"],
+    },
+  };
+
+  const STAGE_CLEAR_COPY = {
+    1: {
+      title: "스테이지 클리어",
+      body: "월식의 기사가 쓰러졌습니다.<br>폐허 너머, 달빛에 침식된 숲이 열립니다.",
+      button: "스테이지2 진입",
+    },
+    2: {
+      title: "백야의 사슴왕이 쓰러졌습니다",
+      body: "숲을 덮던 백야가 갈라지고, 검은 달의 성소가 모습을 드러냅니다.",
+      button: "스테이지3 진입",
     },
   };
 
@@ -206,6 +230,28 @@
       anchorY: 0.58,
       glow: "#c18cff",
     },
+    blackMoonLancer: {
+      src: "assets/sprites/enemy_black_moon_lancer.png",
+      height: 76,
+      anchorX: 0.5,
+      anchorY: 0.66,
+      glow: "#986dff",
+      rotateToPlayer: true,
+    },
+    eclipsePriest: {
+      src: "assets/sprites/enemy_eclipse_priest.png",
+      height: 82,
+      anchorX: 0.5,
+      anchorY: 0.68,
+      glow: "#b78cff",
+    },
+    obsidianWarden: {
+      src: "assets/sprites/enemy_obsidian_warden.png",
+      height: 134,
+      anchorX: 0.5,
+      anchorY: 0.72,
+      glow: "#6d4eff",
+    },
     corruptedTreant: {
       src: "assets/sprites/enemy_corrupted_treant.png",
       height: 118,
@@ -226,6 +272,13 @@
       anchorX: 0.5,
       anchorY: 0.76,
       glow: "#f2f4ff",
+    },
+    blackMoonHeart: {
+      src: "assets/sprites/boss_black_moon_heart.png",
+      height: 248,
+      anchorX: 0.5,
+      anchorY: 0.72,
+      glow: "#9d6dff",
     },
     moonlightBlade: {
       src: "assets/weapons/weapon_moonlight_blade.png",
@@ -290,6 +343,27 @@
       anchorY: 0.5,
       glow: "#b66dff",
     },
+    blackMoonBolt: {
+      src: "assets/effects/effect_black_moon_bolt.png",
+      height: 38,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      glow: "#ad78ff",
+    },
+    eclipseHalo: {
+      src: "assets/weapons/weapon_eclipse_halo.png",
+      height: 94,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      glow: "#d4c2ff",
+    },
+    eclipseWave: {
+      src: "assets/effects/effect_eclipse_wave.png",
+      height: 220,
+      anchorX: 0.5,
+      anchorY: 0.5,
+      glow: "#d4c2ff",
+    },
   };
 
   const SPRITES = Object.fromEntries(
@@ -298,6 +372,7 @@
   const BACKGROUND_TILES = {
     1: loadSprite("assets/backgrounds/bg_moonlit_ruins_tile.png"),
     2: loadSprite("assets/backgrounds/bg_moonlit_forest_tile.png"),
+    3: loadSprite("assets/backgrounds/bg_black_moon_sanctum_tile.png"),
   };
 
   const player = {
@@ -320,6 +395,7 @@
       bullet: { level: 0, timer: 0 },
       shard: { level: 0, timer: 0 },
       mine: { level: 0, timer: 0 },
+      halo: { level: 0, timer: 0, angle: 0 },
     },
     passives: {
       speed: 0,
@@ -379,6 +455,36 @@
       color: "#160d22",
       eye: "#c985ff",
     },
+    blackMoonLancer: {
+      name: "검은 달 첨병",
+      hp: 42,
+      speed: 170,
+      damage: 13,
+      radius: 15,
+      exp: 4,
+      color: "#0c0815",
+      eye: "#a981ff",
+    },
+    eclipsePriest: {
+      name: "식월 사제",
+      hp: 58,
+      speed: 82,
+      damage: 10,
+      radius: 16,
+      exp: 6,
+      color: "#12091f",
+      eye: "#d6b9ff",
+    },
+    obsidianWarden: {
+      name: "흑요석 파수꾼",
+      hp: 150,
+      speed: 55,
+      damage: 24,
+      radius: 27,
+      exp: 11,
+      color: "#0a0810",
+      eye: "#7c62ff",
+    },
     corruptedTreant: {
       name: "침식된 나무정령",
       hp: 95,
@@ -408,6 +514,16 @@
       exp: 60,
       color: "#171827",
       eye: "#f3f6ff",
+    },
+    blackMoonHeart: {
+      name: "검은 달의 심장",
+      hp: 3400,
+      speed: 62,
+      damage: 32,
+      radius: 50,
+      exp: 100,
+      color: "#07050e",
+      eye: "#b88cff",
     },
   };
 
@@ -439,6 +555,13 @@
       desc: "루나 주변에 별빛 지뢰를 설치하고 1초 뒤 폭발시킵니다.",
       available: () => player.weapons.mine.level < 6,
       apply: () => player.weapons.mine.level += 1,
+    },
+    {
+      id: "halo",
+      title: "월식 광륜",
+      desc: "루나를 중심으로 검은 달의 파동을 일으켜 주변 적을 휩쓸어냅니다.",
+      available: () => currentStage >= 3 && player.weapons.halo.level < 6,
+      apply: () => player.weapons.halo.level += 1,
     },
     {
       id: "speed",
@@ -525,6 +648,7 @@
         bullet: { level: 0, timer: 0 },
         shard: { level: 0, timer: 0 },
         mine: { level: 0, timer: 0 },
+        halo: { level: 0, timer: 0, angle: 0 },
       },
       passives: { speed: 0, health: 0, magnet: 0 },
     });
@@ -549,9 +673,15 @@
     resetPlayerFeedback();
   }
 
-  function startStage2() {
+  function startNextStage() {
     if (state !== "stageclear") return;
-    currentStage = 2;
+    const nextStage = currentStage + 1;
+    if (!STAGES[nextStage]) return;
+    startStage(nextStage);
+  }
+
+  function startStage(nextStage) {
+    currentStage = nextStage;
     clearStageObjects();
     player.x = WORLD.width / 2;
     player.y = WORLD.height / 2;
@@ -559,10 +689,18 @@
     player.kills = 0;
     player.invulnFlash = 0;
     player.moving = false;
-    player.hp = Math.max(player.hp, Math.ceil(player.maxHp * 0.7));
-    if (!player.weapons.shard) player.weapons.shard = { level: 0, timer: 0 };
-    player.weapons.shard.level = Math.max(1, player.weapons.shard.level);
-    player.weapons.shard.timer = 0;
+    player.hp = Math.max(player.hp, Math.ceil(player.maxHp * (nextStage >= 3 ? 0.8 : 0.7)));
+    if (nextStage >= 2) {
+      if (!player.weapons.shard) player.weapons.shard = { level: 0, timer: 0 };
+      player.weapons.shard.level = Math.max(1, player.weapons.shard.level);
+      player.weapons.shard.timer = 0;
+    }
+    if (nextStage >= 3) {
+      if (!player.weapons.halo) player.weapons.halo = { level: 0, timer: 0, angle: 0 };
+      player.weapons.halo.level = Math.max(1, player.weapons.halo.level);
+      player.weapons.halo.timer = 0;
+      player.weapons.halo.angle = 0;
+    }
     spawnTimer = 0;
     bossSpawned = false;
     activeChoices = [];
@@ -595,16 +733,23 @@
       gameoverStats.textContent = `${formatTime(player.time)} 생존 · 처치 ${player.kills} · 레벨 ${player.level}`;
     }
     if (next === "stageclear") {
+      const copy = STAGE_CLEAR_COPY[currentStage] || STAGE_CLEAR_COPY[1];
+      const hasNextStage = Boolean(STAGES[currentStage + 1]);
+      stageClearTitle.textContent = copy.title;
+      stageClearSummary.innerHTML = copy.body;
       stageClearStats.innerHTML = renderStats([
         ["클리어 시간", formatTime(player.time)],
         ["현재 레벨", player.level],
         ["처치 수", player.kills],
         ["남은 체력", `${Math.ceil(player.hp)} / ${player.maxHp}`],
       ]);
+      stage2Button.textContent = copy.button;
+      stage2Button.disabled = !hasNextStage;
       stage2Button.focus({ preventScroll: true });
     }
     if (next === "victory") {
-      victoryStats.textContent = `월광 침식림 ${formatTime(player.time)} 클리어 · 처치 ${player.kills} · 레벨 ${player.level} · 남은 체력 ${Math.ceil(player.hp)} / ${player.maxHp}`;
+      victoryTitle.textContent = "검은 달의 심장이 잠잠해졌습니다";
+      victoryStats.textContent = `${stageConfig().name} ${formatTime(player.time)} 클리어 · 처치 ${player.kills} · 레벨 ${player.level} · 남은 체력 ${Math.ceil(player.hp)} / ${player.maxHp}`;
     }
     if (next === "paused") {
       resumeButton.focus({ preventScroll: true });
@@ -631,7 +776,7 @@
   }
 
   function isBossType(type) {
-    return type === "boss" || type === "whiteStagKing";
+    return type === "boss" || type === "whiteStagKing" || type === "blackMoonHeart";
   }
 
   function angleDelta(from, to) {
@@ -833,6 +978,13 @@
   }
 
   function spawnTable(stage, time) {
+    if (stage === 3) {
+      if (time < 75) return { interval: 0.62, types: [["blackMoonLancer", 1]] };
+      if (time < 180) return { interval: 0.5, types: [["blackMoonLancer", 0.65], ["eclipsePriest", 0.35]] };
+      if (time < 260) return { interval: 0.42, types: [["blackMoonLancer", 0.45], ["eclipsePriest", 0.35], ["obsidianWarden", 0.2]] };
+      if (time < 300) return { interval: 0.34, types: [["blackMoonLancer", 0.4], ["eclipsePriest", 0.35], ["obsidianWarden", 0.25]] };
+      return { interval: 0.5, types: [["blackMoonLancer", 0.35], ["eclipsePriest", 0.4], ["obsidianWarden", 0.25]] };
+    }
     if (stage === 2) {
       if (time < 90) return { interval: 0.72, types: [["moonWolf", 1]] };
       if (time < 240) return { interval: 0.58, types: [["moonWolf", 0.7], ["riftMoth", 0.3]] };
@@ -899,7 +1051,9 @@
       dashTime: 0,
       dashVx: 0,
       dashVy: 0,
-      shootTimer: type === "riftMoth" ? 1.1 + Math.random() * 1.2 : 0,
+      shootTimer: type === "riftMoth" || type === "eclipsePriest" ? 1.1 + Math.random() * 1.2 : 0,
+      boltTimer: type === "blackMoonHeart" ? 2.2 : 0,
+      radialTimer: type === "blackMoonHeart" ? 6 : 0,
     });
   }
 
@@ -930,11 +1084,36 @@
         }
       }
 
+      if (e.type === "blackMoonHeart") {
+        const enraged = e.hp <= e.maxHp * 0.5;
+        if (enraged) speed *= 1.15;
+
+        e.boltTimer -= dt;
+        if (e.boltTimer <= 0 && len < 1100) {
+          fireBlackMoonBolt(e, vx, vy, { speed: 245, damage: e.damage, radius: 10, life: 4.8 });
+          e.boltTimer = 2.2;
+        }
+
+        e.radialTimer -= dt;
+        if (e.radialTimer <= 0) {
+          fireRadialBlackMoonBolts(e, enraged ? 12 : 8);
+          e.radialTimer = 6;
+        }
+      }
+
       if (e.type === "riftMoth") {
         e.shootTimer -= dt;
         if (e.shootTimer <= 0 && len < 680) {
           fireRiftBolt(e, dx / len, dy / len);
           e.shootTimer = 2.2 + Math.random() * 0.7;
+        }
+      }
+
+      if (e.type === "eclipsePriest") {
+        e.shootTimer -= dt;
+        if (e.shootTimer <= 0 && len < 760) {
+          fireBlackMoonBolt(e, dx / len, dy / len, { speed: 195, damage: e.damage, radius: 8, life: 4.2 });
+          e.shootTimer = 2.35 + Math.random() * 0.75;
         }
       }
 
@@ -955,14 +1134,49 @@
   }
 
   function fireRiftBolt(enemy, dirX, dirY) {
-    enemyProjectiles.push({
-      x: enemy.x,
-      y: enemy.y,
-      vx: dirX * 170,
-      vy: dirY * 170,
+    fireEnemyProjectile(enemy, dirX, dirY, {
+      speed: 170,
       radius: 8,
       damage: enemy.damage,
       life: 4,
+      spriteKey: "riftBolt",
+    });
+  }
+
+  function fireBlackMoonBolt(enemy, dirX, dirY, options = {}) {
+    fireEnemyProjectile(enemy, dirX, dirY, {
+      speed: options.speed || 210,
+      radius: options.radius || 9,
+      damage: options.damage ?? enemy.damage,
+      life: options.life || 4.4,
+      spriteKey: "blackMoonBolt",
+    });
+  }
+
+  function fireRadialBlackMoonBolts(enemy, count) {
+    for (let i = 0; i < count; i++) {
+      const angle = i * TWO_PI / count + player.time * 0.18;
+      fireBlackMoonBolt(enemy, Math.cos(angle), Math.sin(angle), {
+        speed: 185,
+        damage: enemy.damage,
+        radius: 9,
+        life: 4.8,
+      });
+    }
+  }
+
+  function fireEnemyProjectile(enemy, dirX, dirY, options = {}) {
+    const len = Math.hypot(dirX, dirY) || 1;
+    const speed = options.speed || 170;
+    enemyProjectiles.push({
+      x: enemy.x,
+      y: enemy.y,
+      vx: (dirX / len) * speed,
+      vy: (dirY / len) * speed,
+      radius: options.radius || 8,
+      damage: options.damage ?? enemy.damage,
+      life: options.life || 4,
+      spriteKey: options.spriteKey || "riftBolt",
     });
   }
 
@@ -989,8 +1203,8 @@
     player.kills += 1;
     createGem(e.x, e.y, e.exp, isBossType(e.type));
     floaters.push({ x: e.x, y: e.y, text: "+", life: 0.6 });
-    if (e.type === "boss") setState("stageclear");
-    if (e.type === "whiteStagKing") setState("victory");
+    if (e.type === "boss" || e.type === "whiteStagKing") setState("stageclear");
+    if (e.type === "blackMoonHeart") setState("victory");
   }
 
   function createGem(x, y, value, large = false) {
@@ -1001,6 +1215,7 @@
     updateBlade(dt);
     updateMoonShard(dt);
     updateBullets(dt);
+    updateEclipseHalo(dt);
     updateMines(dt);
   }
 
@@ -1133,6 +1348,41 @@
     return best;
   }
 
+  function updateEclipseHalo(dt) {
+    const weapon = player.weapons.halo;
+    if (!weapon || weapon.level <= 0) return;
+
+    weapon.angle += dt * (1.35 + weapon.level * 0.16);
+    weapon.timer -= dt;
+    if (weapon.timer > 0) return;
+
+    triggerEclipseWave();
+    weapon.timer = Math.max(3, 4.8 - weapon.level * 0.3);
+  }
+
+  function triggerEclipseWave() {
+    const weapon = player.weapons.halo;
+    const radius = 105 + weapon.level * 12;
+    const damage = 24 + weapon.level * 9;
+
+    for (const e of enemies) {
+      if (Math.hypot(player.x - e.x, player.y - e.y) < radius + e.radius) {
+        damageEnemy(e, damage);
+      }
+    }
+
+    explosionEffects.push({
+      type: "eclipseWave",
+      x: player.x,
+      y: player.y,
+      life: 0.48,
+      duration: 0.48,
+      radius,
+      pulse: weapon.angle,
+    });
+    floaters.push({ x: player.x, y: player.y, text: "◐", life: 0.7, burst: radius });
+  }
+
   function updateMines(dt) {
     const weapon = player.weapons.mine;
     if (weapon.level > 0) {
@@ -1173,6 +1423,7 @@
       }
     }
     explosionEffects.push({
+      type: "starlightExplosion",
       x: mine.x,
       y: mine.y,
       life: 3 / EXPLOSION_FPS,
@@ -1218,6 +1469,8 @@
   function hitSparkColors(type) {
     if (type === "sentinel") return ["#FFD2DC", "#FF4A6A", "#B78CFF", "#8FD7FF"];
     if (type === "whiteStagKing") return ["#F4F6FF", "#BFD5FF", "#B78CFF", "#D9F9DD"];
+    if (type === "blackMoonHeart") return ["#F8F0FF", "#B78CFF", "#6D4EFF", "#FF4A8A"];
+    if (type === "blackMoonLancer" || type === "eclipsePriest" || type === "obsidianWarden") return ["#E8DDFF", "#B78CFF", "#6D4EFF"];
     if (type === "corruptedTreant") return ["#D9F9DD", "#8FD48B", "#B78CFF"];
     if (type === "riftMoth") return ["#F0D8FF", "#B78CFF", "#72D6FF"];
     if (type === "moonWolf") return ["#E6ECFF", "#AFC8FF", "#B78CFF"];
@@ -1428,6 +1681,7 @@
     drawEnemies();
     drawEnemyProjectiles();
     drawPlayer();
+    drawEclipseHalo();
     drawPlayerHitRings();
     drawBullets();
     drawBlade();
@@ -1721,6 +1975,34 @@
     ctx.restore();
   }
 
+  function drawEclipseHalo() {
+    const weapon = player.weapons.halo;
+    if (!weapon || weapon.level <= 0) return;
+
+    const p = worldToScreen(player.x, player.y);
+    const pulse = 0.5 + Math.sin(player.time * 4.8) * 0.5;
+    const height = 86 + weapon.level * 8 + pulse * 6;
+    if (drawSprite("eclipseHalo", p.x, p.y, {
+      height,
+      rotation: weapon.angle,
+      alpha: 0.72,
+      shadowBlur: 24,
+    })) {
+      return;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = 0.64;
+    ctx.shadowBlur = 24;
+    ctx.shadowColor = "#d4c2ff";
+    ctx.strokeStyle = "rgba(212, 194, 255, 0.82)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, height * 0.42, weapon.angle, weapon.angle + Math.PI * 1.62);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawBlade() {
     const blade = player.weapons.blade;
     const blades = Math.min(4, 1 + Math.floor((blade.level - 1) / 2));
@@ -1775,17 +2057,19 @@
     for (const projectile of enemyProjectiles) {
       const p = worldToScreen(projectile.x, projectile.y);
       const angle = Math.atan2(projectile.vy, projectile.vx);
-      if (drawSprite("riftBolt", p.x, p.y, {
+      const spriteKey = projectile.spriteKey || "riftBolt";
+      const isBlackMoon = spriteKey === "blackMoonBolt";
+      if (drawSprite(spriteKey, p.x, p.y, {
         rotation: angle,
-        shadowBlur: 18,
+        shadowBlur: isBlackMoon ? 22 : 18,
       })) {
         continue;
       }
 
       ctx.save();
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = "#b66dff";
-      ctx.fillStyle = "#d4a8ff";
+      ctx.shadowBlur = isBlackMoon ? 22 : 18;
+      ctx.shadowColor = isBlackMoon ? "#ad78ff" : "#b66dff";
+      ctx.fillStyle = isBlackMoon ? "#d8c0ff" : "#d4a8ff";
       ctx.beginPath();
       ctx.arc(p.x, p.y, projectile.radius, 0, TWO_PI);
       ctx.fill();
@@ -1834,6 +2118,10 @@
 
   function drawExplosionEffects() {
     for (const effect of explosionEffects) {
+      if (effect.type === "eclipseWave") {
+        drawEclipseWaveEffect(effect);
+        continue;
+      }
       const p = worldToScreen(effect.x, effect.y);
       const elapsed = effect.duration - effect.life;
       const frame = clamp(Math.floor(elapsed * EXPLOSION_FPS), 0, 2);
@@ -1856,6 +2144,39 @@
       ctx.stroke();
       ctx.restore();
     }
+  }
+
+  function drawEclipseWaveEffect(effect) {
+    const p = worldToScreen(effect.x, effect.y);
+    const elapsed = effect.duration - effect.life;
+    const t = clamp(elapsed / effect.duration, 0, 1);
+    const eased = 1 - Math.pow(1 - t, 2);
+    const height = effect.radius * (1.35 + eased * 0.95);
+
+    if (drawSprite("eclipseWave", p.x, p.y, {
+      height,
+      rotation: effect.pulse || 0,
+      alpha: 0.88 * (1 - t * 0.72),
+      shadowBlur: 30,
+    })) {
+      return;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = 1 - t;
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = "#d4c2ff";
+    ctx.strokeStyle = "rgba(212, 194, 255, 0.78)";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, effect.radius * eased, 0, TWO_PI);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(111, 78, 255, 0.52)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, effect.radius * (0.58 + eased * 0.42), 0, TWO_PI);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawHitSparks() {
@@ -2094,6 +2415,7 @@
       ["•", player.weapons.bullet.level],
       ["◆", player.weapons.shard?.level || 0],
       ["✦", player.weapons.mine.level],
+      ["◐", player.weapons.halo?.level || 0],
       ["SPD", player.passives.speed],
       ["HP", player.passives.health],
       ["MAG", player.passives.magnet],
@@ -2159,10 +2481,12 @@
       if (!event.repeat) resumeGame();
       return;
     }
-    keys.add(event.code);
     if (event.code === "Enter" && state === "stageclear") {
-      startStage2();
+      event.preventDefault();
+      if (!event.repeat) startNextStage();
+      return;
     }
+    keys.add(event.code);
     if (event.code === "Enter" && (state === "title" || state === "gameover" || state === "victory")) {
       resetGame();
     }
@@ -2242,7 +2566,7 @@
   document.getElementById("restartButton").addEventListener("click", resetGame);
   resumeButton.addEventListener("click", resumeGame);
   pauseRestartButton.addEventListener("click", resetGame);
-  stage2Button.addEventListener("click", startStage2);
+  stage2Button.addEventListener("click", startNextStage);
   stageTitleButton.addEventListener("click", returnToTitle);
   document.getElementById("victoryRestartButton").addEventListener("click", resetGame);
 
