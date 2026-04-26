@@ -88,6 +88,11 @@
     requiredExp: 9,
   };
 
+  const STAGE_START_HP_FLOORS = {
+    2: 75,
+    3: 65,
+  };
+
   const WEAPON_MAX_LEVELS = {
     blade: 4,
     bullet: 4,
@@ -98,6 +103,10 @@
   };
 
   const SPAWN_SCALES = {
+    stage2IntroWolf: { hpScale: 0.82, damageScale: 0.72, speedScale: 0.86, expScale: 0.9 },
+    stage2IntroFromStage1: { hpScale: 1, damageScale: 0.95, speedScale: 0.95, expScale: 1 },
+    stage2EarlyWolf: { hpScale: 0.95, damageScale: 0.85, speedScale: 0.92, expScale: 1 },
+    stage2EarlyFromStage1: { hpScale: 1.12, damageScale: 1, speedScale: 1, expScale: 1.05 },
     stage2FromStage1: { hpScale: 1.25, damageScale: 1.15, expScale: 1.15 },
     stage3FromStage1: { hpScale: 1.6, damageScale: 1.35, expScale: 1.2 },
     stage3FromStage2: { hpScale: 1.25, damageScale: 1.15, expScale: 1.12 },
@@ -820,12 +829,13 @@
 
   function startStage(nextStage) {
     const previousHpRatio = player.maxHp > 0 ? clamp(player.hp / player.maxHp, 0, 1) : 1;
+    const minHp = STAGE_START_HP_FLOORS[nextStage] || 60;
     currentStage = nextStage;
     clearStageObjects();
     Object.assign(player, {
       x: WORLD.width / 2,
       y: WORLD.height / 2,
-      hp: clamp(previousHpRatio * PLAYER_BASE_STATS.maxHp + 25, 60, PLAYER_BASE_STATS.maxHp),
+      hp: clamp(previousHpRatio * PLAYER_BASE_STATS.maxHp + 25, minHp, PLAYER_BASE_STATS.maxHp),
       maxHp: PLAYER_BASE_STATS.maxHp,
       speed: PLAYER_BASE_STATS.speed,
       pickupRadius: PLAYER_BASE_STATS.pickupRadius,
@@ -1160,29 +1170,41 @@
       };
     }
     if (stage === 2) {
-      if (time < 45) {
+      if (time < 30) {
         return {
-          interval: 0.72,
+          interval: 1.1,
           types: [
-            ["moonWolf", 0.65],
-            ["worm", 0.25, SPAWN_SCALES.stage2FromStage1],
-            ["chaser", 0.1, SPAWN_SCALES.stage2FromStage1],
+            ["moonWolf", 0.45, SPAWN_SCALES.stage2IntroWolf],
+            ["worm", 0.45, SPAWN_SCALES.stage2IntroFromStage1],
+            ["chaser", 0.1, SPAWN_SCALES.stage2IntroFromStage1],
           ],
         };
       }
-      if (time < 120) {
+      if (time < 75) {
         return {
-          interval: 0.58,
+          interval: 0.88,
+          types: [
+            ["moonWolf", 0.5, SPAWN_SCALES.stage2EarlyWolf],
+            ["worm", 0.25, SPAWN_SCALES.stage2EarlyFromStage1],
+            ["chaser", 0.15, SPAWN_SCALES.stage2EarlyFromStage1],
+            ["riftMoth", 0.1],
+          ],
+        };
+      }
+      if (time < 130) {
+        return {
+          interval: 0.68,
           types: [
             ["moonWolf", 0.45],
-            ["riftMoth", 0.25],
+            ["riftMoth", 0.2],
             ["chaser", 0.2, SPAWN_SCALES.stage2FromStage1],
-            ["sentinel", 0.1, SPAWN_SCALES.stage2FromStage1],
+            ["worm", 0.1, SPAWN_SCALES.stage2FromStage1],
+            ["sentinel", 0.05, SPAWN_SCALES.stage2FromStage1],
           ],
         };
       }
       return {
-        interval: 0.44,
+        interval: 0.5,
         types: [
           ["moonWolf", 0.35],
           ["riftMoth", 0.25],
@@ -1224,6 +1246,7 @@
     const spec = ENEMY_TYPES[type];
     const hpScale = options.hpScale ?? options.hp ?? 1;
     const damageScale = options.damageScale ?? options.damage ?? 1;
+    const speedScale = options.speedScale ?? options.speed ?? 1;
     const expScale = options.expScale ?? options.exp ?? 1;
     const hp = Math.ceil(spec.hp * hpScale);
     const viewW = canvas.width / resizeScale;
@@ -1251,7 +1274,7 @@
       y: clamp(y, spec.radius, WORLD.height - spec.radius),
       hp,
       maxHp: hp,
-      speed: spec.speed,
+      speed: spec.speed * speedScale,
       damage: spec.damage * damageScale,
       radius: spec.radius,
       exp: spec.exp * expScale,
