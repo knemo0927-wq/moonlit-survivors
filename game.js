@@ -45,7 +45,7 @@
     1: {
       name: "폐허",
       bossType: "boss",
-      bossTime: 300,
+      bossTime: 240,
       gradient: ["#10233f", "#071322", "#03070e"],
       overlay: "rgba(3, 7, 14, 0.34)",
       vignette: ["rgba(8, 20, 38, 0)", "rgba(0, 2, 8, 0.42)"],
@@ -53,7 +53,7 @@
     2: {
       name: "월광 침식림",
       bossType: "whiteStagKing",
-      bossTime: 300,
+      bossTime: 180,
       gradient: ["#17233a", "#101a26", "#030908"],
       overlay: "rgba(13, 6, 24, 0.25)",
       vignette: ["rgba(24, 42, 31, 0)", "rgba(1, 7, 5, 0.48)"],
@@ -61,7 +61,7 @@
     3: {
       name: "검은 달의 성소",
       bossType: "blackMoonHeart",
-      bossTime: 300,
+      bossTime: 210,
       gradient: ["#171024", "#090911", "#020204"],
       overlay: "rgba(2, 2, 8, 0.28)",
       vignette: ["rgba(24, 16, 36, 0)", "rgba(0, 0, 3, 0.58)"],
@@ -79,6 +79,28 @@
       body: "숲을 덮던 백야가 갈라지고, 검은 달의 성소가 모습을 드러냅니다.",
       button: "스테이지3 진입",
     },
+  };
+
+  const PLAYER_BASE_STATS = {
+    maxHp: 100,
+    speed: 180,
+    pickupRadius: 45,
+    requiredExp: 9,
+  };
+
+  const WEAPON_MAX_LEVELS = {
+    blade: 4,
+    bullet: 4,
+    shardStage2: 3,
+    shardStage3: 4,
+    mine: 4,
+    halo: 3,
+  };
+
+  const SPAWN_SCALES = {
+    stage2FromStage1: { hpScale: 1.25, damageScale: 1.15, expScale: 1.15 },
+    stage3FromStage1: { hpScale: 1.6, damageScale: 1.35, expScale: 1.2 },
+    stage3FromStage2: { hpScale: 1.25, damageScale: 1.15, expScale: 1.12 },
   };
 
   let state = "title";
@@ -223,6 +245,30 @@
       glow: "#cbd9ff",
       rotateToPlayer: true,
     },
+    moonWolfRun1: {
+      src: "assets/sprites/enemy_moon_wolf_run_1.png",
+      height: 70,
+      anchorX: 0.5,
+      anchorY: 0.62,
+      glow: "#cbd9ff",
+      rotateToPlayer: true,
+    },
+    moonWolfRun2: {
+      src: "assets/sprites/enemy_moon_wolf_run_2.png",
+      height: 70,
+      anchorX: 0.5,
+      anchorY: 0.62,
+      glow: "#cbd9ff",
+      rotateToPlayer: true,
+    },
+    moonWolfRun3: {
+      src: "assets/sprites/enemy_moon_wolf_run_3.png",
+      height: 70,
+      anchorX: 0.5,
+      anchorY: 0.62,
+      glow: "#cbd9ff",
+      rotateToPlayer: true,
+    },
     riftMoth: {
       src: "assets/sprites/enemy_rift_moth.png",
       height: 74,
@@ -230,8 +276,53 @@
       anchorY: 0.58,
       glow: "#c18cff",
     },
+    riftMothFlap1: {
+      src: "assets/sprites/enemy_rift_moth_flap_1.png",
+      height: 74,
+      anchorX: 0.5,
+      anchorY: 0.58,
+      glow: "#c18cff",
+    },
+    riftMothFlap2: {
+      src: "assets/sprites/enemy_rift_moth_flap_2.png",
+      height: 74,
+      anchorX: 0.5,
+      anchorY: 0.58,
+      glow: "#c18cff",
+    },
+    riftMothCast: {
+      src: "assets/sprites/enemy_rift_moth_cast.png",
+      height: 74,
+      anchorX: 0.5,
+      anchorY: 0.58,
+      glow: "#d6b9ff",
+    },
     blackMoonLancer: {
       src: "assets/sprites/enemy_black_moon_lancer.png",
+      height: 76,
+      anchorX: 0.5,
+      anchorY: 0.66,
+      glow: "#986dff",
+      rotateToPlayer: true,
+    },
+    blackMoonLancerRun1: {
+      src: "assets/sprites/enemy_black_moon_lancer_run_1.png",
+      height: 76,
+      anchorX: 0.5,
+      anchorY: 0.66,
+      glow: "#986dff",
+      rotateToPlayer: true,
+    },
+    blackMoonLancerRun2: {
+      src: "assets/sprites/enemy_black_moon_lancer_run_2.png",
+      height: 76,
+      anchorX: 0.5,
+      anchorY: 0.66,
+      glow: "#986dff",
+      rotateToPlayer: true,
+    },
+    blackMoonLancerRun3: {
+      src: "assets/sprites/enemy_black_moon_lancer_run_3.png",
       height: 76,
       anchorX: 0.5,
       anchorY: 0.66,
@@ -245,6 +336,27 @@
       anchorY: 0.68,
       glow: "#b78cff",
     },
+    eclipsePriestFloat1: {
+      src: "assets/sprites/enemy_eclipse_priest_float_1.png",
+      height: 82,
+      anchorX: 0.5,
+      anchorY: 0.68,
+      glow: "#b78cff",
+    },
+    eclipsePriestFloat2: {
+      src: "assets/sprites/enemy_eclipse_priest_float_2.png",
+      height: 82,
+      anchorX: 0.5,
+      anchorY: 0.68,
+      glow: "#b78cff",
+    },
+    eclipsePriestCast: {
+      src: "assets/sprites/enemy_eclipse_priest_cast.png",
+      height: 82,
+      anchorX: 0.5,
+      anchorY: 0.68,
+      glow: "#d6b9ff",
+    },
     obsidianWarden: {
       src: "assets/sprites/enemy_obsidian_warden.png",
       height: 134,
@@ -252,8 +364,36 @@
       anchorY: 0.72,
       glow: "#6d4eff",
     },
+    obsidianWardenWalk1: {
+      src: "assets/sprites/enemy_obsidian_warden_walk_1.png",
+      height: 134,
+      anchorX: 0.5,
+      anchorY: 0.72,
+      glow: "#6d4eff",
+    },
+    obsidianWardenWalk2: {
+      src: "assets/sprites/enemy_obsidian_warden_walk_2.png",
+      height: 134,
+      anchorX: 0.5,
+      anchorY: 0.72,
+      glow: "#6d4eff",
+    },
     corruptedTreant: {
       src: "assets/sprites/enemy_corrupted_treant.png",
+      height: 118,
+      anchorX: 0.5,
+      anchorY: 0.72,
+      glow: "#8dbf8f",
+    },
+    corruptedTreantWalk1: {
+      src: "assets/sprites/enemy_corrupted_treant_walk_1.png",
+      height: 118,
+      anchorX: 0.5,
+      anchorY: 0.72,
+      glow: "#8dbf8f",
+    },
+    corruptedTreantWalk2: {
+      src: "assets/sprites/enemy_corrupted_treant_walk_2.png",
       height: 118,
       anchorX: 0.5,
       anchorY: 0.72,
@@ -390,18 +530,8 @@
     time: 0,
     invulnFlash: 0,
     moving: false,
-    weapons: {
-      blade: { level: 1, angle: 0, cooldowns: new Map() },
-      bullet: { level: 0, timer: 0 },
-      shard: { level: 0, timer: 0 },
-      mine: { level: 0, timer: 0 },
-      halo: { level: 0, timer: 0, angle: 0 },
-    },
-    passives: {
-      speed: 0,
-      health: 0,
-      magnet: 0,
-    },
+    weapons: createStartingWeapons(),
+    passives: createStartingPassives(),
   };
 
   const ENEMY_TYPES = {
@@ -532,35 +662,35 @@
       id: "blade",
       title: "달빛 칼날 강화",
       desc: "회전하는 달빛 칼날이 더 빠르고 강하게 적을 베어냅니다.",
-      available: () => player.weapons.blade.level < 6,
+      available: () => player.weapons.blade.level < WEAPON_MAX_LEVELS.blade,
       apply: () => player.weapons.blade.level += 1,
     },
     {
       id: "bullet",
       title: "은빛 탄환",
       desc: "가장 가까운 적을 향해 자동으로 발사되는 탄환을 획득하거나 강화합니다.",
-      available: () => player.weapons.bullet.level < 6,
+      available: () => player.weapons.bullet.level < WEAPON_MAX_LEVELS.bullet,
       apply: () => player.weapons.bullet.level += 1,
     },
     {
       id: "shard",
       title: "월광 파편",
       desc: "가장 가까운 적을 추적하는 달빛 파편을 주기적으로 발사합니다.",
-      available: () => currentStage >= 2 && player.weapons.shard.level < 6,
+      available: () => player.weapons.shard.level < maxMoonShardLevel(),
       apply: () => player.weapons.shard.level += 1,
     },
     {
       id: "mine",
       title: "별빛 지뢰",
       desc: "루나 주변에 별빛 지뢰를 설치하고 1초 뒤 폭발시킵니다.",
-      available: () => player.weapons.mine.level < 6,
+      available: () => player.weapons.mine.level < WEAPON_MAX_LEVELS.mine,
       apply: () => player.weapons.mine.level += 1,
     },
     {
       id: "halo",
       title: "월식 광륜",
       desc: "루나를 중심으로 검은 달의 파동을 일으켜 주변 적을 휩쓸어냅니다.",
-      available: () => currentStage >= 3 && player.weapons.halo.level < 6,
+      available: () => currentStage >= 3 && player.weapons.halo.level < WEAPON_MAX_LEVELS.halo,
       apply: () => player.weapons.halo.level += 1,
     },
     {
@@ -615,6 +745,20 @@
     updateMobileControls();
   }
 
+  function createStartingWeapons() {
+    return {
+      blade: { level: 1, angle: 0, cooldowns: new Map() },
+      bullet: { level: 0, timer: 0 },
+      shard: { level: 0, timer: 0 },
+      mine: { level: 0, timer: 0 },
+      halo: { level: 0, timer: 0, angle: 0 },
+    };
+  }
+
+  function createStartingPassives() {
+    return { speed: 0, health: 0, magnet: 0 };
+  }
+
   function resetGame() {
     currentStage = 1;
     enemies.length = 0;
@@ -632,25 +776,19 @@
       x: WORLD.width / 2,
       y: WORLD.height / 2,
       radius: 13,
-      hp: 100,
-      maxHp: 100,
-      speed: 180,
-      pickupRadius: 45,
+      hp: PLAYER_BASE_STATS.maxHp,
+      maxHp: PLAYER_BASE_STATS.maxHp,
+      speed: PLAYER_BASE_STATS.speed,
+      pickupRadius: PLAYER_BASE_STATS.pickupRadius,
       level: 1,
       exp: 0,
-      requiredExp: requiredExp(1),
+      requiredExp: PLAYER_BASE_STATS.requiredExp,
       kills: 0,
       time: 0,
       invulnFlash: 0,
       moving: false,
-      weapons: {
-        blade: { level: 1, angle: 0, cooldowns: new Map() },
-        bullet: { level: 0, timer: 0 },
-        shard: { level: 0, timer: 0 },
-        mine: { level: 0, timer: 0 },
-        halo: { level: 0, timer: 0, angle: 0 },
-      },
-      passives: { speed: 0, health: 0, magnet: 0 },
+      weapons: createStartingWeapons(),
+      passives: createStartingPassives(),
     });
     spawnTimer = 0;
     bossSpawned = false;
@@ -681,26 +819,26 @@
   }
 
   function startStage(nextStage) {
+    const previousHpRatio = player.maxHp > 0 ? clamp(player.hp / player.maxHp, 0, 1) : 1;
     currentStage = nextStage;
     clearStageObjects();
-    player.x = WORLD.width / 2;
-    player.y = WORLD.height / 2;
-    player.time = 0;
-    player.kills = 0;
-    player.invulnFlash = 0;
-    player.moving = false;
-    player.hp = Math.max(player.hp, Math.ceil(player.maxHp * (nextStage >= 3 ? 0.8 : 0.7)));
-    if (nextStage >= 2) {
-      if (!player.weapons.shard) player.weapons.shard = { level: 0, timer: 0 };
-      player.weapons.shard.level = Math.max(1, player.weapons.shard.level);
-      player.weapons.shard.timer = 0;
-    }
-    if (nextStage >= 3) {
-      if (!player.weapons.halo) player.weapons.halo = { level: 0, timer: 0, angle: 0 };
-      player.weapons.halo.level = Math.max(1, player.weapons.halo.level);
-      player.weapons.halo.timer = 0;
-      player.weapons.halo.angle = 0;
-    }
+    Object.assign(player, {
+      x: WORLD.width / 2,
+      y: WORLD.height / 2,
+      hp: clamp(previousHpRatio * PLAYER_BASE_STATS.maxHp + 25, 60, PLAYER_BASE_STATS.maxHp),
+      maxHp: PLAYER_BASE_STATS.maxHp,
+      speed: PLAYER_BASE_STATS.speed,
+      pickupRadius: PLAYER_BASE_STATS.pickupRadius,
+      level: 1,
+      exp: 0,
+      requiredExp: PLAYER_BASE_STATS.requiredExp,
+      kills: 0,
+      time: 0,
+      invulnFlash: 0,
+      moving: false,
+      weapons: createStartingWeapons(),
+      passives: createStartingPassives(),
+    });
     spawnTimer = 0;
     bossSpawned = false;
     activeChoices = [];
@@ -777,6 +915,12 @@
 
   function isBossType(type) {
     return type === "boss" || type === "whiteStagKing" || type === "blackMoonHeart";
+  }
+
+  function maxMoonShardLevel() {
+    if (currentStage >= 3) return WEAPON_MAX_LEVELS.shardStage3;
+    if (currentStage >= 2) return WEAPON_MAX_LEVELS.shardStage2;
+    return 0;
   }
 
   function angleDelta(from, to) {
@@ -973,23 +1117,80 @@
     spawnTimer -= dt;
     if (spawnTimer > 0) return;
     const table = spawnTable(currentStage, player.time);
-    spawnEnemy(weightedPick(table.types));
+    spawnWeightedEnemy(weightedPick(table.types));
     spawnTimer = table.interval;
   }
 
   function spawnTable(stage, time) {
     if (stage === 3) {
-      if (time < 75) return { interval: 0.62, types: [["blackMoonLancer", 1]] };
-      if (time < 180) return { interval: 0.5, types: [["blackMoonLancer", 0.65], ["eclipsePriest", 0.35]] };
-      if (time < 260) return { interval: 0.42, types: [["blackMoonLancer", 0.45], ["eclipsePriest", 0.35], ["obsidianWarden", 0.2]] };
-      if (time < 300) return { interval: 0.34, types: [["blackMoonLancer", 0.4], ["eclipsePriest", 0.35], ["obsidianWarden", 0.25]] };
-      return { interval: 0.5, types: [["blackMoonLancer", 0.35], ["eclipsePriest", 0.4], ["obsidianWarden", 0.25]] };
+      if (time < 60) {
+        return {
+          interval: 0.62,
+          types: [
+            ["blackMoonLancer", 0.5],
+            ["moonWolf", 0.2, SPAWN_SCALES.stage3FromStage2],
+            ["riftMoth", 0.15, SPAWN_SCALES.stage3FromStage2],
+            ["chaser", 0.15, SPAWN_SCALES.stage3FromStage1],
+          ],
+        };
+      }
+      if (time < 150) {
+        return {
+          interval: 0.5,
+          types: [
+            ["blackMoonLancer", 0.35],
+            ["eclipsePriest", 0.25],
+            ["moonWolf", 0.15, SPAWN_SCALES.stage3FromStage2],
+            ["riftMoth", 0.15, SPAWN_SCALES.stage3FromStage2],
+            ["sentinel", 0.1, SPAWN_SCALES.stage3FromStage1],
+          ],
+        };
+      }
+      return {
+        interval: 0.42,
+        types: [
+          ["blackMoonLancer", 0.3],
+          ["eclipsePriest", 0.25],
+          ["obsidianWarden", 0.15],
+          ["corruptedTreant", 0.1, SPAWN_SCALES.stage3FromStage2],
+          ["riftMoth", 0.1, SPAWN_SCALES.stage3FromStage2],
+          ["chaser", 0.05, SPAWN_SCALES.stage3FromStage1],
+          ["sentinel", 0.05, SPAWN_SCALES.stage3FromStage1],
+        ],
+      };
     }
     if (stage === 2) {
-      if (time < 90) return { interval: 0.72, types: [["moonWolf", 1]] };
-      if (time < 240) return { interval: 0.58, types: [["moonWolf", 0.7], ["riftMoth", 0.3]] };
-      if (time < 300) return { interval: 0.44, types: [["moonWolf", 0.48], ["riftMoth", 0.34], ["corruptedTreant", 0.18]] };
-      return { interval: 0.5, types: [["moonWolf", 0.38], ["riftMoth", 0.34], ["corruptedTreant", 0.28]] };
+      if (time < 45) {
+        return {
+          interval: 0.72,
+          types: [
+            ["moonWolf", 0.65],
+            ["worm", 0.25, SPAWN_SCALES.stage2FromStage1],
+            ["chaser", 0.1, SPAWN_SCALES.stage2FromStage1],
+          ],
+        };
+      }
+      if (time < 120) {
+        return {
+          interval: 0.58,
+          types: [
+            ["moonWolf", 0.45],
+            ["riftMoth", 0.25],
+            ["chaser", 0.2, SPAWN_SCALES.stage2FromStage1],
+            ["sentinel", 0.1, SPAWN_SCALES.stage2FromStage1],
+          ],
+        };
+      }
+      return {
+        interval: 0.44,
+        types: [
+          ["moonWolf", 0.35],
+          ["riftMoth", 0.25],
+          ["corruptedTreant", 0.15],
+          ["chaser", 0.15, SPAWN_SCALES.stage2FromStage1],
+          ["sentinel", 0.1, SPAWN_SCALES.stage2FromStage1],
+        ],
+      };
     }
     if (time < 60) return { interval: 1.0, types: [["worm", 1]] };
     if (time < 150) return { interval: 0.75, types: [["worm", 0.7], ["chaser", 0.3]] };
@@ -1006,15 +1207,25 @@
 
   function weightedPick(entries) {
     let roll = Math.random();
-    for (const [type, weight] of entries) {
+    for (const entry of entries) {
+      const weight = entry[1];
       roll -= weight;
-      if (roll <= 0) return type;
+      if (roll <= 0) return entry;
     }
-    return entries[entries.length - 1][0];
+    return entries[entries.length - 1];
   }
 
-  function spawnEnemy(type) {
+  function spawnWeightedEnemy(entry) {
+    const [type, , options] = entry;
+    spawnEnemy(type, options);
+  }
+
+  function spawnEnemy(type, options = {}) {
     const spec = ENEMY_TYPES[type];
+    const hpScale = options.hpScale ?? options.hp ?? 1;
+    const damageScale = options.damageScale ?? options.damage ?? 1;
+    const expScale = options.expScale ?? options.exp ?? 1;
+    const hp = Math.ceil(spec.hp * hpScale);
     const viewW = canvas.width / resizeScale;
     const viewH = canvas.height / resizeScale;
     const side = Math.floor(Math.random() * 4);
@@ -1038,12 +1249,12 @@
       type,
       x: clamp(x, spec.radius, WORLD.width - spec.radius),
       y: clamp(y, spec.radius, WORLD.height - spec.radius),
-      hp: spec.hp,
-      maxHp: spec.hp,
+      hp,
+      maxHp: hp,
       speed: spec.speed,
-      damage: spec.damage,
+      damage: spec.damage * damageScale,
       radius: spec.radius,
-      exp: spec.exp,
+      exp: spec.exp * expScale,
       hitFlash: 0,
       animSeed: Math.random() * 100,
       nextSparkTime: 0,
@@ -1224,7 +1435,7 @@
     blade.angle += dt * (2.1 + blade.level * 0.22);
     const blades = Math.min(4, 1 + Math.floor((blade.level - 1) / 2));
     const orbit = 54 + blade.level * 5;
-    const damage = 10 + blade.level * 5;
+    const damage = 8 + blade.level * 4;
     const hitRadius = 21;
     for (let b = 0; b < blades; b++) {
       const angle = blade.angle + b * TWO_PI / blades;
@@ -1234,9 +1445,9 @@
       };
       for (const e of enemies) {
         const last = blade.cooldowns.get(e) || 0;
-        if (player.time - last < 0.36) continue;
+        if (player.time - last < 0.52) continue;
         if (Math.hypot(hit.x - e.x, hit.y - e.y) < hitRadius + e.radius) {
-          damageEnemy(e, damage);
+          damageEnemy(e, damage * (isBossType(e.type) ? 0.7 : 1));
           blade.cooldowns.set(e, player.time);
         }
       }
@@ -1247,10 +1458,11 @@
     const weapon = player.weapons.bullet;
     if (weapon.level > 0) {
       weapon.timer -= dt;
-      const interval = Math.max(0.22, 0.85 - weapon.level * 0.08);
+      const interval = Math.max(0.65, 1.15 - weapon.level * 0.1);
       if (weapon.timer <= 0) {
         const shots = weapon.level >= 4 ? 2 : 1;
-        for (let i = 0; i < shots; i++) fireBullet(i * 0.16);
+        const damageScale = shots === 2 ? 0.8 : 1;
+        for (let i = 0; i < shots; i++) fireBullet((i - (shots - 1) / 2) * 0.16, damageScale);
         weapon.timer = interval;
       }
     }
@@ -1276,10 +1488,10 @@
     const weapon = player.weapons.shard;
     if (!weapon || weapon.level <= 0) return;
     weapon.timer -= dt;
-    const interval = Math.max(0.34, 1.15 - weapon.level * 0.1);
+    const interval = Math.max(1.1, 1.7 - weapon.level * 0.12);
     if (weapon.timer > 0) return;
 
-    const shots = weapon.level >= 4 ? 2 : 1;
+    const shots = currentStage >= 3 && weapon.level >= 4 ? 2 : 1;
     for (let i = 0; i < shots; i++) fireMoonShard((i - (shots - 1) / 2) * 0.22);
     weapon.timer = interval;
   }
@@ -1287,9 +1499,12 @@
   function updateBulletHoming(bullet, dt) {
     if (!bullet.homing) return;
 
-    const target = bullet.target && enemies.includes(bullet.target) ? bullet.target : nearestEnemy();
+    let target = bullet.target && enemies.includes(bullet.target) ? bullet.target : null;
+    if (!target && bullet.retarget !== false) {
+      target = nearestEnemy();
+      bullet.target = target;
+    }
     if (!target) return;
-    bullet.target = target;
     const currentAngle = Math.atan2(bullet.vy, bullet.vx);
     const targetAngle = Math.atan2(target.y - bullet.y, target.x - bullet.x);
     const nextAngle = currentAngle + clamp(angleDelta(currentAngle, targetAngle), -bullet.turnRate * dt, bullet.turnRate * dt);
@@ -1297,8 +1512,8 @@
     bullet.vy = Math.sin(nextAngle) * bullet.speed;
   }
 
-  function fireBullet(angleOffset) {
-    const target = nearestEnemy();
+  function fireBullet(angleOffset, damageScale = 1) {
+    const target = nearestEnemy(700);
     if (!target) return;
     const angle = Math.atan2(target.y - player.y, target.x - player.x) + angleOffset;
     bullets.push({
@@ -1307,7 +1522,7 @@
       vx: Math.cos(angle) * 440,
       vy: Math.sin(angle) * 440,
       radius: 5,
-      damage: 15 + player.weapons.bullet.level * 7,
+      damage: (12 + player.weapons.bullet.level * 5) * damageScale,
       life: 1.6,
       spriteKey: "silverBullet",
     });
@@ -1325,22 +1540,23 @@
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       radius: 7,
-      damage: 12 + weapon.level * 6,
-      life: 2.8,
+      damage: 10 + weapon.level * 4,
+      life: 2.2,
       spriteKey: "moonShard",
       homing: true,
       speed,
-      turnRate: 5.4,
+      turnRate: 2.8,
       target,
+      retarget: false,
     });
   }
 
-  function nearestEnemy() {
+  function nearestEnemy(maxRange = Infinity) {
     let best = null;
     let bestD = Infinity;
     for (const e of enemies) {
       const d = Math.hypot(e.x - player.x, e.y - player.y);
-      if (d < bestD) {
+      if (d <= maxRange && d < bestD) {
         best = e;
         bestD = d;
       }
@@ -1357,17 +1573,17 @@
     if (weapon.timer > 0) return;
 
     triggerEclipseWave();
-    weapon.timer = Math.max(3, 4.8 - weapon.level * 0.3);
+    weapon.timer = Math.max(5.2, 7.5 - weapon.level * 0.6);
   }
 
   function triggerEclipseWave() {
     const weapon = player.weapons.halo;
     const radius = 105 + weapon.level * 12;
-    const damage = 24 + weapon.level * 9;
+    const damage = 18 + weapon.level * 7;
 
     for (const e of enemies) {
       if (Math.hypot(player.x - e.x, player.y - e.y) < radius + e.radius) {
-        damageEnemy(e, damage);
+        damageEnemy(e, damage * (isBossType(e.type) ? 0.5 : 1));
       }
     }
 
@@ -1388,9 +1604,8 @@
     if (weapon.level > 0) {
       weapon.timer -= dt;
       if (weapon.timer <= 0) {
-        const count = weapon.level >= 5 ? 2 : 1;
-        for (let i = 0; i < count; i++) placeMine();
-        weapon.timer = Math.max(1.2, 3.8 - weapon.level * 0.34);
+        placeMine();
+        weapon.timer = Math.max(3, 4.8 - weapon.level * 0.45);
       }
     }
     for (let i = mines.length - 1; i >= 0; i--) {
@@ -1410,8 +1625,8 @@
       x: clamp(player.x + Math.cos(angle) * range, 20, WORLD.width - 20),
       y: clamp(player.y + Math.sin(angle) * range, 20, WORLD.height - 20),
       timer: 1,
-      radius: 76 + player.weapons.mine.level * 10,
-      damage: 28 + player.weapons.mine.level * 12,
+      radius: 58 + player.weapons.mine.level * 8,
+      damage: 22 + player.weapons.mine.level * 8,
       pulse: Math.random() * TWO_PI,
     });
   }
@@ -1419,7 +1634,7 @@
   function explodeMine(mine) {
     for (const e of enemies) {
       if (Math.hypot(mine.x - e.x, mine.y - e.y) < mine.radius + e.radius) {
-        damageEnemy(e, mine.damage);
+        damageEnemy(e, mine.damage * (isBossType(e.type) ? 0.6 : 1));
       }
     }
     explosionEffects.push({
@@ -1914,10 +2129,26 @@
   }
 
   function getEnemySpriteKey(enemy) {
+    if (enemy.type === "riftMoth" && enemy.shootTimer > 0 && enemy.shootTimer <= 0.28) {
+      return "riftMothCast";
+    }
+    if (enemy.type === "eclipsePriest" && enemy.shootTimer > 0 && enemy.shootTimer <= 0.34) {
+      return "eclipsePriestCast";
+    }
+
     const frames = {
       worm: { fps: 6, keys: ["wormMove1", "wormMove2"] },
       chaser: { fps: 10, keys: ["chaserRun1", "chaserRun2"] },
       sentinel: { fps: 5, keys: ["sentinelWalk1", "sentinelWalk2"] },
+      moonWolf: { fps: 12, keys: ["moonWolfRun1", "moonWolfRun2", "moonWolfRun3", "moonWolfRun2"] },
+      riftMoth: { fps: 8, keys: ["riftMothFlap1", "riftMothFlap2"] },
+      corruptedTreant: { fps: 5, keys: ["corruptedTreantWalk1", "corruptedTreantWalk2"] },
+      blackMoonLancer: {
+        fps: 10,
+        keys: ["blackMoonLancerRun1", "blackMoonLancerRun2", "blackMoonLancerRun3", "blackMoonLancerRun2"],
+      },
+      eclipsePriest: { fps: 4, keys: ["eclipsePriestFloat1", "eclipsePriestFloat2"] },
+      obsidianWarden: { fps: 4, keys: ["obsidianWardenWalk1", "obsidianWardenWalk2"] },
     }[enemy.type];
 
     if (!frames) return enemy.type;
