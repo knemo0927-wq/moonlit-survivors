@@ -90,7 +90,7 @@
 
   const STAGE_START_HP_FLOORS = {
     2: 75,
-    3: 65,
+    3: 80,
   };
 
   const WEAPON_MAX_LEVELS = {
@@ -108,6 +108,13 @@
     stage2EarlyWolf: { hpScale: 0.95, damageScale: 0.85, speedScale: 0.92, expScale: 1 },
     stage2EarlyFromStage1: { hpScale: 1.12, damageScale: 1, speedScale: 1, expScale: 1.05 },
     stage2FromStage1: { hpScale: 1.25, damageScale: 1.15, expScale: 1.15 },
+    stage3IntroLancer: { hpScale: 0.72, damageScale: 0.6, speedScale: 0.78, expScale: 0.85 },
+    stage3IntroFromStage1: { hpScale: 1.15, damageScale: 1, speedScale: 0.95, expScale: 1 },
+    stage3IntroFromStage2: { hpScale: 0.9, damageScale: 0.75, speedScale: 0.82, expScale: 0.95 },
+    stage3EarlyLancer: { hpScale: 0.88, damageScale: 0.75, speedScale: 0.86, expScale: 1 },
+    stage3EarlyPriest: { hpScale: 0.9, damageScale: 0.75, speedScale: 0.9, expScale: 1 },
+    stage3EarlyFromStage1: { hpScale: 1.35, damageScale: 1.1, speedScale: 1, expScale: 1.1 },
+    stage3EarlyFromStage2: { hpScale: 1.05, damageScale: 0.9, speedScale: 0.94, expScale: 1.05 },
     stage3FromStage1: { hpScale: 1.6, damageScale: 1.35, expScale: 1.2 },
     stage3FromStage2: { hpScale: 1.25, damageScale: 1.15, expScale: 1.12 },
   };
@@ -1133,26 +1140,39 @@
 
   function spawnTable(stage, time) {
     if (stage === 3) {
-      if (time < 60) {
+      if (time < 35) {
         return {
-          interval: 0.62,
+          interval: 1.15,
           types: [
-            ["blackMoonLancer", 0.5],
-            ["moonWolf", 0.2, SPAWN_SCALES.stage3FromStage2],
-            ["riftMoth", 0.15, SPAWN_SCALES.stage3FromStage2],
-            ["chaser", 0.15, SPAWN_SCALES.stage3FromStage1],
+            ["blackMoonLancer", 0.35, SPAWN_SCALES.stage3IntroLancer],
+            ["moonWolf", 0.25, SPAWN_SCALES.stage3IntroFromStage2],
+            ["worm", 0.25, SPAWN_SCALES.stage3IntroFromStage1],
+            ["chaser", 0.15, SPAWN_SCALES.stage3IntroFromStage1],
+          ],
+        };
+      }
+      if (time < 90) {
+        return {
+          interval: 0.88,
+          types: [
+            ["blackMoonLancer", 0.35, SPAWN_SCALES.stage3EarlyLancer],
+            ["moonWolf", 0.2, SPAWN_SCALES.stage3EarlyFromStage2],
+            ["riftMoth", 0.15, SPAWN_SCALES.stage3EarlyFromStage2],
+            ["chaser", 0.2, SPAWN_SCALES.stage3EarlyFromStage1],
+            ["eclipsePriest", 0.1, SPAWN_SCALES.stage3EarlyPriest],
           ],
         };
       }
       if (time < 150) {
         return {
-          interval: 0.5,
+          interval: 0.62,
           types: [
             ["blackMoonLancer", 0.35],
-            ["eclipsePriest", 0.25],
+            ["eclipsePriest", 0.2],
             ["moonWolf", 0.15, SPAWN_SCALES.stage3FromStage2],
             ["riftMoth", 0.15, SPAWN_SCALES.stage3FromStage2],
             ["sentinel", 0.1, SPAWN_SCALES.stage3FromStage1],
+            ["worm", 0.05, SPAWN_SCALES.stage3FromStage1],
           ],
         };
       }
